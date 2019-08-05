@@ -1,0 +1,7 @@
+Import('*')
+
+SimObject('FaultInjector.py')
+
+Source('fault_injector.cc')
+
+DebugFlag('FaultTrace')

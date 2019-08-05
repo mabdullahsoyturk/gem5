@@ -1,0 +1,7 @@
+Import('*')
+
+SimObject('MyMemobj.py')
+
+Source('my_memobj.cc')
+
+DebugFlag('MyMemobj', 'My Memobj to learn gem5')

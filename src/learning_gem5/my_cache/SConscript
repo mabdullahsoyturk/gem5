@@ -1,0 +1,7 @@
+Import('*')
+
+SimObject('MyCache.py')
+
+Source('my_cache.cc')
+
+DebugFlag('MyCache', 'My cache to learn gem5')
