@@ -28,6 +28,9 @@ system.cpu = TimingSimpleCPU()
 system.cpu.icache = L1ICache(opts)
 system.cpu.dcache = L1DCache(opts)
 
+system.cpu.icache.fault_injector = FaultInjector(input_path=input_file)
+system.cpu.dcache.fault_injector = FaultInjector(input_path=input_file)
+
 system.cpu.icache.connectCPU(system.cpu)
 system.cpu.dcache.connectCPU(system.cpu)
 
@@ -37,6 +40,8 @@ system.cpu.icache.connectBus(system.l2bus)
 system.cpu.dcache.connectBus(system.l2bus)
 
 system.l2cache = L2Cache(opts)
+system.l2cache.fault_injector = FaultInjector(input_path=input_file)
+
 system.l2cache.connectCPUSideBus(system.l2bus)
 
 system.membus = SystemXBar()

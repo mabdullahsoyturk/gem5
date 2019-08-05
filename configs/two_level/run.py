@@ -4,7 +4,7 @@ from caches import *
 from optparse import OptionParser
 
 binary = "/home/muhammet/Downloads/gem5/tests/test-progs/matrix_multiplication/matrix_mul"
-input_file = "/home/muhammet/Downloads/gem5/input.txt"
+input_file = "/home/muhammet/Downloads/gem5/inputs/input.txt"
 
 parser = OptionParser()
 
@@ -25,8 +25,6 @@ system.mem_ranges = [AddrRange('512MB')] # Create an address range
 
 system.cpu = TimingSimpleCPU()
 
-system.membus = SystemXBar()
-
 system.cpu.icache = L1ICache(opts)
 system.cpu.dcache = L1DCache(opts)
 
@@ -36,8 +34,19 @@ system.cpu.dcache.fault_injector = FaultInjector(input_path=input_file)
 system.cpu.icache.connectCPU(system.cpu)
 system.cpu.dcache.connectCPU(system.cpu)
 
-system.cpu.icache.connectBus(system.membus)
-system.cpu.dcache.connectBus(system.membus)
+system.l2bus = L2XBar()
+
+system.cpu.icache.connectBus(system.l2bus)
+system.cpu.dcache.connectBus(system.l2bus)
+
+system.l2cache = L2Cache(opts)
+system.l2cache.fault_injector = FaultInjector(input_path=input_file)
+
+system.l2cache.connectCPUSideBus(system.l2bus)
+
+system.membus = SystemXBar()
+
+system.l2cache.connectMemSideBus(system.membus)
 
 system.cpu.createInterruptController()
 
@@ -62,6 +71,7 @@ process.cmd = [binary]
 system.cpu.workload = process
 system.cpu.createThreads()
 
+# set up the root SimObject and start the simulation
 root = Root(full_system = False, system = system)
 m5.instantiate()
 

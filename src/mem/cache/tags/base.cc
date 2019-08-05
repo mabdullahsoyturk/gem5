@@ -19,6 +19,7 @@ BaseTags::BaseTags(const Params *p)
       warmedUp(false), numBlocks(p->size / p->block_size),
       dataBlks(new uint8_t[p->size]) // Allocate data storage in one big chunk
 {
+    DPRINTF(Cache, "Size of cache is : %d\n", size);
 }
 
 ReplaceableEntry*

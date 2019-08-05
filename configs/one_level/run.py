@@ -4,7 +4,7 @@ from caches import *
 from optparse import OptionParser
 
 binary = "/home/muhammet/Downloads/gem5/tests/test-progs/matrix_multiplication/matrix_mul"
-input_file = "/home/muhammet/Downloads/gem5/input.txt"
+input_file = "/home/muhammet/Downloads/gem5/inputs/input.txt"
 
 parser = OptionParser()
 

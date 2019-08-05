@@ -32,7 +32,7 @@ struct CacheFault {
     int stuckAt; // Stuck at 0 (0), Stuck at 1 (1)
     std::string cacheToBeInserted;
     uint8_t alteredByte; // Only for intermittent faults. Holds the bit value that was corrupted. Useful for restoring.
-    int recovered;
+    int scheduled;
     int inserted;
 };
 

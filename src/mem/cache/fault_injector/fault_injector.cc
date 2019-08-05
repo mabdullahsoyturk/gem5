@@ -21,8 +21,9 @@ FaultInjector::init(std::string owner)
     
     int type,blockAddr,byteOffset,bitOffset,tickStart,tickEnd,stuckAt;
     std::string cacheToBeInserted;
+    int numberOfFaults = 0;
 
-    DPRINTF(FaultTrace, "%s faults:\n\n", owner);
+    DPRINTF(FaultTrace, "\n\n\t%s faults:\n\n", owner);
 
 	while(ifs >> type >> blockAddr >> byteOffset >> bitOffset >> tickStart >> tickEnd >> stuckAt >> cacheToBeInserted){
         if((cacheToBeInserted.compare(owner)) == 0) {
@@ -35,16 +36,18 @@ FaultInjector::init(std::string owner)
             fault.tickEnd = tickEnd;
             fault.stuckAt = stuckAt;
             fault.cacheToBeInserted = cacheToBeInserted;
-            if(type == 1){ fault.recovered = 0; }
+            if(type == 1){ fault.scheduled = 0; }
+
             faults.push_back(fault);
             DPRINTF(FaultTrace, "Type: %d, Fault address %#x\t stuck at: %d\n", fault.type, fault.blockAddr, fault.stuckAt);
+
+            numberOfFaults++;
         }
 	}
 
     ifs.close();
 
-
-    DPRINTF(FaultTrace, "\n\n");
+    DPRINTF(FaultTrace, "Number of faults in total: %d\n", numberOfFaults);
 }
 
 void 
@@ -75,7 +78,7 @@ FaultInjector::injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::s
                 DPRINTF(FaultTrace, "Permanent fault stuck at %d injected to %#x\n", it->stuckAt ,it->blockAddr + it->byteOffset);
             }else if(isIntermittent(*it) && isFaultActive(*it)) {
                 uint8_t* packetData = pkt->getPtr<uint8_t>();
-                it->alteredByte = packetData[it->byteOffset - pkt->getOffset(blkSize)]; // Store corrupted byte value so that we can recover.
+                it->alteredByte = packetData[it->byteOffset - pkt->getOffset(blkSize)]; // Store corrupted byte data so that we can recover later.
 
                 flipBit(*it, pkt, blkSize);
                 DPRINTF(FaultTrace, "Intermittent fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
@@ -83,7 +86,6 @@ FaultInjector::injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::s
                 flipBit(*it, pkt, blkSize);
                 it->inserted = 1;
                 DPRINTF(FaultTrace, "Transient fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
-                //faults.erase(it); // Erase transient fault after inserting because we won't use it again.
             }
         }
     }

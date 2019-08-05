@@ -92,9 +92,9 @@ BaseCache::recoverIntermittentFaults()
     faultInjector->recoverIntermittentFaults(tags, cacheType);   
 
     for(std::vector<CacheFault>::iterator it = faults.begin(); it != faults.end(); ++it) {
-        if(faultInjector->isIntermittent(*it) && it->cacheToBeInserted == cacheType && it->recovered == 0) {
-            DPRINTF(FaultTrace, "Intermittent found %#x %d\n", it->blockAddr, it->recovered);
-            it->recovered = 1;
+        if(faultInjector->isIntermittent(*it) && it->cacheToBeInserted == cacheType && it->scheduled == 0) {
+            DPRINTF(FaultTrace, "Intermittent fault scheduled %#x\n", it->blockAddr);
+            it->scheduled = 1;
             schedule(event, it->tickEnd + 1);
             break;
         }
