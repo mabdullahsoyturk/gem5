@@ -32,7 +32,7 @@ struct CacheFault {
     int stuckAt; // Stuck at 0 (0), Stuck at 1 (1)
     std::string cacheToBeInserted;
     uint8_t alteredByte; // Only for intermittent faults. Holds the bit value that was corrupted. Useful for restoring.
-    int scheduled;
+    int recovered;
     int inserted;
 };
 
@@ -77,6 +77,7 @@ class FaultInjector : public SimObject
          * @param fault The fault to test whether it is active.
           */
         bool isFaultActive(CacheFault fault) { return fault.tickStart <= curTick() && fault.tickEnd >= curTick(); }
+        bool isFaultDead(CacheFault fault) { return fault.tickEnd < curTick(); }
 
         /** Function to get faults. */
         std::vector<CacheFault>& getFaults() { return faults; }

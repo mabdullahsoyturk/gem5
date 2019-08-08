@@ -23,7 +23,7 @@ FaultInjector::init(std::string owner)
     std::string cacheToBeInserted;
     int numberOfFaults = 0;
 
-    DPRINTF(FaultTrace, "\n\n\t%s faults:\n\n", owner);
+    DPRINTF(FaultTrace, "\t%s faults:\n\n", owner);
 
 	while(ifs >> type >> blockAddr >> byteOffset >> bitOffset >> tickStart >> tickEnd >> stuckAt >> cacheToBeInserted){
         if((cacheToBeInserted.compare(owner)) == 0) {
@@ -36,10 +36,11 @@ FaultInjector::init(std::string owner)
             fault.tickEnd = tickEnd;
             fault.stuckAt = stuckAt;
             fault.cacheToBeInserted = cacheToBeInserted;
-            if(type == 1){ fault.scheduled = 0; }
+            if(type == 1){ fault.recovered = 0; }
 
             faults.push_back(fault);
-            DPRINTF(FaultTrace, "Type: %d, Fault address %#x\t stuck at: %d\n", fault.type, fault.blockAddr, fault.stuckAt);
+            DPRINTF(FaultTrace, "Type: %d, Address: %#x, Byte Offset: %d, Bit Offset: %d, Tick Start: %d, Tick End: %d, Stuck at: %d\n", 
+                                fault.type, fault.blockAddr, fault.byteOffset, fault.bitOffset, fault.tickStart, fault.tickEnd, fault.stuckAt);
 
             numberOfFaults++;
         }
@@ -47,7 +48,7 @@ FaultInjector::init(std::string owner)
 
     ifs.close();
 
-    DPRINTF(FaultTrace, "Number of faults in total: %d\n", numberOfFaults);
+    DPRINTF(FaultTrace, "Number of faults in total: %d", numberOfFaults);
 }
 
 void 
@@ -76,12 +77,20 @@ FaultInjector::injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::s
             if(isPermanent(*it)) {
                 flipBit(*it, pkt, blkSize);
                 DPRINTF(FaultTrace, "Permanent fault stuck at %d injected to %#x\n", it->stuckAt ,it->blockAddr + it->byteOffset);
-            }else if(isIntermittent(*it) && isFaultActive(*it)) {
-                uint8_t* packetData = pkt->getPtr<uint8_t>();
-                it->alteredByte = packetData[it->byteOffset - pkt->getOffset(blkSize)]; // Store corrupted byte data so that we can recover later.
+            }else if(isIntermittent(*it)) {
+                if(isFaultActive(*it)) {
+                    uint8_t* packetData = pkt->getPtr<uint8_t>();
+                    it->alteredByte = packetData[it->byteOffset - pkt->getOffset(blkSize)]; // Store corrupted byte data so that we can recover later.
 
-                flipBit(*it, pkt, blkSize);
-                DPRINTF(FaultTrace, "Intermittent fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
+                    flipBit(*it, pkt, blkSize);
+                    DPRINTF(FaultTrace, "Intermittent fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
+                }else if(isFaultDead(*it) && it->recovered == 0) {
+                    uint8_t* data = pkt->getPtr<uint8_t>();
+
+                    data[it->byteOffset - pkt->getOffset(blkSize)] = it->alteredByte; // recover the altered byte.
+                    it->recovered = 1;
+                    DPRINTF(FaultTrace, "Intermittent fault stuck at %d recovered at address %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
+                }
             }else if(isTransient(*it) && it->tickStart <= curTick() && isRead && it->inserted == 0) {
                 flipBit(*it, pkt, blkSize);
                 it->inserted = 1;
