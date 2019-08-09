@@ -868,11 +868,6 @@ class BaseCache : public ClockedObject
     const std::string cacheType;
     const bool goldenRun;
     FaultInjector* faultInjector;
-    std::vector<CacheFault> faults;
-
-    void recoverIntermittentFaults();
-    EventFunctionWrapper event;
-    void startup();
 
     // Statistics
     /**

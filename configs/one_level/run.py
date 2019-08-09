@@ -60,7 +60,7 @@ system.mem_ctrl.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.master
 
 process = Process()
-process.cmd = [binary]
+process.cmd = [opts.binary]
 # Set the cpu to use the process as its workload and create thread contexts
 system.cpu.workload = process
 system.cpu.createThreads()

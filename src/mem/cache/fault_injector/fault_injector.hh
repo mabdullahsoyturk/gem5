@@ -99,12 +99,6 @@ class FaultInjector : public SimObject
          * a transient fault on a write (I am not sure but this logic should probably be changed).  
         */
         void injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::string cacheType);
-
-        /** Recovers original data of faulty addresses after intermittent fault interval is over
-         * 
-         * @param tags Tags to reach cache blocks.
-         */
-        void recoverIntermittentFaults(BaseTags *tags, std::string cacheType);
 };
 
 #endif // __MEM_CACHE_FAULT_INJECTOR_HH__

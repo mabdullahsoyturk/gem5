@@ -65,7 +65,7 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
       missCount(p->max_miss_count),
       addrRanges(p->addr_ranges.begin(), p->addr_ranges.end()),
       system(p->system), cacheType(p->cache_type), goldenRun(p->golden_run),
-      faultInjector(p->fault_injector), event([this]{recoverIntermittentFaults();}, name())
+      faultInjector(p->fault_injector)
 {
     // the MSHR queue has no reserve entries as we check the MSHR
     // queue on every single allocation, whereas the write queue has
@@ -83,28 +83,6 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
         prefetcher->setCache(this);
 
     faultInjector->init(cacheType);
-    faults = faultInjector->getFaults();
-}
-
-void
-BaseCache::recoverIntermittentFaults()
-{
-    faultInjector->recoverIntermittentFaults(tags, cacheType);   
-
-    for(std::vector<CacheFault>::iterator it = faults.begin(); it != faults.end(); ++it) {
-        if(faultInjector->isIntermittent(*it) && it->cacheToBeInserted == cacheType && it->recovered == 0) {
-            DPRINTF(FaultTrace, "Intermittent fault scheduled %#x\n", it->blockAddr);
-            it->recovered = 1;
-            schedule(event, it->tickEnd + 1);
-            break;
-        }
-    }
-}
-
-void
-BaseCache::startup()
-{
-    //schedule(event, 0);
 }
 
 BaseCache::~BaseCache()
@@ -938,7 +916,7 @@ BaseCache::satisfyRequest(PacketPtr pkt, CacheBlk *blk, bool, bool)
             for(int i = 0; i < pkt->getSize(); i++) {
                 DPRINTF(Cache, "isWrite : Data of packet before injection %d : %d\n", i, pktData[i]);
             }*/
-
+        
             faultInjector->injectFaults(pkt, blkSize, false, cacheType);
 
             /*for(int i = 0; i < pkt->getSize(); i++) {
