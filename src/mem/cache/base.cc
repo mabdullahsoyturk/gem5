@@ -64,7 +64,7 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
       noTargetMSHR(nullptr),
       missCount(p->max_miss_count),
       addrRanges(p->addr_ranges.begin(), p->addr_ranges.end()),
-      system(p->system), cacheType(p->cache_type), goldenRun(p->golden_run),
+      system(p->system), cacheType(p->cache_type),
       faultInjector(p->fault_injector)
 {
     // the MSHR queue has no reserve entries as we check the MSHR
@@ -1193,7 +1193,14 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
         DPRINTF(FlowTrace, "Access isWriteback worked for %#x\n", pkt->getAddr());
+
+        uint8_t originalData[pkt->getSize()];
+
+        memcpy(originalData, pkt->getPtr<uint8_t>(), pkt->getSize());
+
         pkt->writeDataToBlock(blk->data, blkSize);
+        pkt->setData(originalData);
+
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
         incHitCount(pkt);
 
@@ -1289,7 +1296,13 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
         DPRINTF(FlowTrace, "Access writeClean worked for %#x\n", pkt->getAddr());
+
+        uint8_t originalData[pkt->getSize()];
+
+        memcpy(originalData, pkt->getPtr<uint8_t>(), pkt->getSize());
+
         pkt->writeDataToBlock(blk->data, blkSize);
+        pkt->setData(originalData);
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
 
         incHitCount(pkt);
