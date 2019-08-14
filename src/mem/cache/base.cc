@@ -435,7 +435,7 @@ BaseCache::recvTimingResp(PacketPtr pkt)
         const bool allocate = (writeAllocator && mshr->wasWholeLineWrite) ?
             writeAllocator->allocate() : mshr->allocOnFill();
 
-        DPRINTF(Cache, "recvTimingResp handleFill is working for %#x\n", pkt->getAddr());
+        DPRINTF(FlowTrace, "recvTimingResp handleFill is working for %#x\n", pkt->getAddr());
 
         blk = handleFill(pkt, blk, writebacks, allocate);
         assert(blk != nullptr);

@@ -6,7 +6,7 @@ from optparse import OptionParser
 # For all options see src/mem/cache/BaseCache.py
 
 class L1Cache(Cache):
-    assoc = 2
+    assoc = 1
     tag_latency = 2
     data_latency = 2
     response_latency = 2
