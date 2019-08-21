@@ -10,6 +10,7 @@
 #include "base/intmath.hh"
 #include "base/logging.hh"
 #include "mem/cache/replacement_policies/replaceable_entry.hh"
+#include "debug/CacheTags.hh"
 
 BaseIndexingPolicy::BaseIndexingPolicy(const Params *p)
     : SimObject(p), assoc(p->assoc),
@@ -25,6 +26,8 @@ BaseIndexingPolicy::BaseIndexingPolicy(const Params *p)
     for (uint32_t i = 0; i < numSets; ++i) {
         sets[i].resize(assoc);
     }
+
+    DPRINTF(CacheTags, "Entry size: %d, setShift: %d, tagShift: %d\n", p->entry_size, setShift, tagShift);
 }
 
 ReplaceableEntry*

@@ -6,7 +6,7 @@ from optparse import OptionParser
 # For all options see src/mem/cache/BaseCache.py
 
 class L1Cache(Cache):
-    assoc = 2
+    assoc = 1
     tag_latency = 2
     data_latency = 2
     response_latency = 2
@@ -34,7 +34,7 @@ class L1ICache(L1Cache):
         self.cpu_side = cpu.icache_port
 
 class L1DCache(L1Cache):
-    size = '64kB'
+    size = '2kB'
 
     def __init__(self, opts=None):
         self.cache_type = 'l1d'
