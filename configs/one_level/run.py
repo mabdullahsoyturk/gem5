@@ -8,7 +8,6 @@ input_file = "/home/muhammet/Downloads/gem5/inputs/input.txt"
 
 parser = OptionParser()
 
-parser.add_option("--golden-run", action='store_true', help="No faults")
 parser.add_option("-c", "--binary", help="Binary of the program to be simulated", default=binary)
 parser.add_option("-i", "--input", help="Fault input file", default=input_file)
 

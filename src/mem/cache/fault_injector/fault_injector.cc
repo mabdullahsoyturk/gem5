@@ -84,7 +84,7 @@ FaultInjector::injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::s
 
                     flipBit(*it, pkt, blkSize);
                     DPRINTF(FaultTrace, "Intermittent fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
-                }else if(isFaultDead(*it) && it->recovered == 0) {
+                }else if(isIntervalOver(*it) && it->recovered == 0) {
                     uint8_t* data = pkt->getPtr<uint8_t>();
 
                     data[it->byteOffset - pkt->getOffset(blkSize)] = it->alteredByte; // recover the altered byte.

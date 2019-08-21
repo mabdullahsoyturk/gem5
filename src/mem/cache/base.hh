@@ -866,7 +866,6 @@ class BaseCache : public ClockedObject
     System *system;
 
     const std::string cacheType;
-    const bool goldenRun;
     FaultInjector* faultInjector;
 
     // Statistics

@@ -197,5 +197,5 @@ if __name__ == '__main__':
         description = "".join(["No of correct\t", "No of wrong\t", "No of crash\n"])
         result_file.write(description)
 
-        line = "".join([str(experiment_manager.number_of_correct_result) + "\t\t\t\t", str(experiment_manager.number_of_wrong_result) + "\t\t\t\t", str(experiment_manager.number_of_crashes) + "\t\t\t\t\n\n\n"])
+        line = "".join([str(experiment_manager.number_of_correct_result) + "\t", str(experiment_manager.number_of_wrong_result) + "\t", str(experiment_manager.number_of_crashes) + "\t\n\n\n"])
         result_file.write(line)

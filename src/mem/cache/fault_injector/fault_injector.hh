@@ -48,8 +48,12 @@ class FaultInjector : public SimObject
     public:
         FaultInjector(FaultInjectorParams *p);
 
-        /** Reads all faults from the input file and populates faults vector. */
-        void init(std::string owner);
+        /** 
+         * Reads all faults from the input file and populates faults vector. 
+         * 
+         * @param cacheType Which cache owns this fault injector object.
+         */
+        void init(std::string cacheType);
         
         /** Helper functions to detect the type of fault. 
          * 
@@ -77,7 +81,12 @@ class FaultInjector : public SimObject
          * @param fault The fault to test whether it is active.
           */
         bool isFaultActive(CacheFault fault) { return fault.tickStart <= curTick() && fault.tickEnd >= curTick(); }
-        bool isFaultDead(CacheFault fault) { return fault.tickEnd < curTick(); }
+
+        /** Checks whether an intermittent fault interval is over.
+         *  
+         * @param fault The fault to test whether it is active.
+        */
+        bool isIntervalOver(CacheFault fault) { return fault.tickEnd < curTick(); }
 
         /** Function to get faults. */
         std::vector<CacheFault>& getFaults() { return faults; }
@@ -93,10 +102,11 @@ class FaultInjector : public SimObject
 
         /** Injects all active faults at specified tick. 
          * 
-         * @param data Data that will be corrupted.
-         * @param blockAddr Physical address of packet's block address. This will be compared with faults' physical addresses.
+         * @param pkt Packet that will be corrupted.
+         * @param blkSize Size of one block in cache.
          * @param isRead Indicates whether we inject faults on a read. This is useful because, for example, there is no point of inserting
          * a transient fault on a write (I am not sure but this logic should probably be changed).  
+         * @param cacheType Parameter to understand which cache performs the request.
         */
         void injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::string cacheType);
 };
