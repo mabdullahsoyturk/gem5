@@ -16,24 +16,20 @@
 #include "params/FaultInjector.hh"
 #include "sim/sim_object.hh"
 #include "mem/packet.hh"
+#include "mem/cache/cache_blk.hh"
 #include "mem/cache/base.hh"
 #include "mem/cache/tags/base_set_assoc.hh"
+#include "mem/cache/tags/base.hh"
 #include "base/logging.hh"
 
 class BaseTags;
+class CacheBlk;
 
 struct CacheFault {
-    int type; // Type of fault : Transient (0), Intermittent (1), Permanent (2)
-    int blockAddr; // Address of the block that will be corrupted.
+    int set; // Address of the block that will be corrupted.
     int byteOffset; // Byte offset of the address from the beginning of block address.
     int bitOffset; // Determines which bit of the byte will be corrupted.
-    int tickStart; // At which cycle the fault will be inserted.
-    int tickEnd; // Only for intermittent faults.
-    int stuckAt; // Stuck at 0 (0), Stuck at 1 (1)
     std::string cacheToBeInserted;
-    uint8_t alteredByte; // Only for intermittent faults. Holds the bit value that was corrupted. Useful for restoring.
-    int recovered;
-    int inserted;
 };
 
 class FaultInjector : public SimObject
@@ -55,42 +51,6 @@ class FaultInjector : public SimObject
          */
         void init(std::string cacheType);
         
-        /** Helper functions to detect the type of fault. 
-         * 
-         * @param fault The fault to test whether it is transient, intermittent or permanent,
-        */
-        bool isTransient(CacheFault fault){ return fault.type == 0; }
-        bool isIntermittent(CacheFault fault){ return fault.type == 1; }
-        bool isPermanent(CacheFault fault){ return fault.type == 2; }
-        
-        /** Function to check whether packet's address range contains a faulty addresss.
-         * 
-         * @param fault The fault that provides block address and byte offset of the faulty address
-         * @param pkt The packet that attempts to change the content of the block
-         * @param blkSize Size of one block in the cache.
-         */
-        bool isFaultyAddress(CacheFault fault, PacketPtr pkt, unsigned blkSize) {
-            int targetAddress = fault.blockAddr + fault.byteOffset;
-
-            return targetAddress >= pkt->getAddr() && targetAddress <= pkt->getAddr() + pkt->getSize() - 1; 
-        }
-
-        /** Checks whether a fault is active. Useful for intermittent faults. This function
-         * is meaningless for permanent and transient faults.
-         * 
-         * @param fault The fault to test whether it is active.
-          */
-        bool isFaultActive(CacheFault fault) { return fault.tickStart <= curTick() && fault.tickEnd >= curTick(); }
-
-        /** Checks whether an intermittent fault interval is over.
-         *  
-         * @param fault The fault to test whether it is active.
-        */
-        bool isIntervalOver(CacheFault fault) { return fault.tickEnd < curTick(); }
-
-        /** Function to get faults. */
-        std::vector<CacheFault>& getFaults() { return faults; }
-
         /** Flips a bit of the data according to stuck at policy. If it is stuck at 1 fault, it flips
          * specified bit to 1. If it is stuck at 0 fault, it flips specified bit to 0.
          * 
@@ -98,7 +58,7 @@ class FaultInjector : public SimObject
          * @param pkt Pointer to the packet whose data will be corrupted.
          * @param blkSize Size of one block in the cache.
          */
-        void flipBit(CacheFault fault, PacketPtr pkt, unsigned blkSize);
+        void flipBit(CacheFault fault, CacheBlk* blk, unsigned blkSize);
 
         /** Injects all active faults at specified tick. 
          * 
@@ -108,7 +68,7 @@ class FaultInjector : public SimObject
          * a transient fault on a write (I am not sure but this logic should probably be changed).  
          * @param cacheType Parameter to understand which cache performs the request.
         */
-        void injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::string cacheType);
+        void injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::string cacheType);
 };
 
 #endif // __MEM_CACHE_FAULT_INJECTOR_HH__

@@ -19,28 +19,22 @@ FaultInjector::init(std::string owner)
 		fatal("Could not read the file.");
     }
     
-    int type,blockAddr,byteOffset,bitOffset,tickStart,tickEnd,stuckAt;
+    int set,byteOffset,bitOffset;
     std::string cacheToBeInserted;
     int numberOfFaults = 0;
 
     DPRINTF(FaultTrace, "\t%s faults:\n\n", owner);
 
-	while(ifs >> type >> blockAddr >> byteOffset >> bitOffset >> tickStart >> tickEnd >> stuckAt >> cacheToBeInserted){
+	while(ifs >> set >> byteOffset >> bitOffset >> cacheToBeInserted){
         if((cacheToBeInserted.compare(owner)) == 0) {
             CacheFault fault;
-            fault.type = type;
-            fault.blockAddr = blockAddr;
+            fault.set = set;
             fault.byteOffset = byteOffset;
             fault.bitOffset = bitOffset;
-            fault.tickStart = tickStart;
-            fault.tickEnd = tickEnd;
-            fault.stuckAt = stuckAt;
             fault.cacheToBeInserted = cacheToBeInserted;
-            if(type == 1){ fault.recovered = 0; }
 
             faults.push_back(fault);
-            DPRINTF(FaultTrace, "Type: %d, Address: %#x, Byte Offset: %d, Bit Offset: %d, Tick Start: %d, Tick End: %d, Stuck at: %d\n", 
-                                fault.type, fault.blockAddr, fault.byteOffset, fault.bitOffset, fault.tickStart, fault.tickEnd, fault.stuckAt);
+            DPRINTF(FaultTrace, "Set: %#x, Byte Offset: %d, Bit Offset: %d\n", fault.set, fault.byteOffset, fault.bitOffset);
 
             numberOfFaults++;
         }
@@ -52,51 +46,25 @@ FaultInjector::init(std::string owner)
 }
 
 void 
-FaultInjector::flipBit(CacheFault fault, PacketPtr pkt, unsigned blkSize)
+FaultInjector::flipBit(CacheFault fault, CacheBlk* blk, unsigned blkSize)
 {
-    uint8_t* data = pkt->getPtr<uint8_t>();
-
-    if(fault.stuckAt == 0) {
-        uint8_t oldValue = data[fault.byteOffset - pkt->getOffset(blkSize)];
-        data[fault.byteOffset - pkt->getOffset(blkSize)] &= ~(1UL << fault.bitOffset);
-        DPRINTF(FaultTrace, "Old value : %d, New value: %d\n", oldValue, data[fault.byteOffset - pkt->getOffset(blkSize)]);
-    } else if(fault.stuckAt == 1) {
-        uint8_t oldValue = data[fault.byteOffset - pkt->getOffset(blkSize)];
-        data[fault.byteOffset - pkt->getOffset(blkSize)] |= 1UL << fault.bitOffset;
-        DPRINTF(FaultTrace, "Old value : %d, New value: %d\n", oldValue, data[fault.byteOffset - pkt->getOffset(blkSize)]);
-    } else {
-        fatal("Invalid stuck at value");
-    }
+    uint8_t* data = blk->data;
+    
+    uint8_t oldValue = data[fault.byteOffset];
+    data[fault.byteOffset] &= ~(1UL << fault.bitOffset);
+    DPRINTF(FaultTrace, "Set: %#x, Byte Offset: %d, Bit Offset: %d\n corrupted", fault.set, fault.byteOffset, fault.bitOffset);
+    DPRINTF(FaultTrace, "Old value of byte %d : %d, New value of byte %d: %d\n", fault.byteOffset, oldValue, fault.byteOffset, data[fault.byteOffset]);
 }
 
 void 
-FaultInjector::injectFaults(PacketPtr pkt, unsigned blkSize, bool isRead, std::string cacheType) 
+FaultInjector::injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::string cacheType) 
 {
     for(std::vector<CacheFault>::iterator it = faults.begin(); it != faults.end(); ++it) {
-        if(isFaultyAddress(*it, pkt, blkSize) && it->cacheToBeInserted == cacheType) {
-            if(isPermanent(*it)) {
-                flipBit(*it, pkt, blkSize);
-                DPRINTF(FaultTrace, "Permanent fault stuck at %d injected to %#x\n", it->stuckAt ,it->blockAddr + it->byteOffset);
-            }else if(isIntermittent(*it)) {
-                if(isFaultActive(*it)) {
-                    uint8_t* packetData = pkt->getPtr<uint8_t>();
-                    it->alteredByte = packetData[it->byteOffset - pkt->getOffset(blkSize)]; // Store corrupted byte data so that we can recover later.
+        CacheBlk* blk = static_cast<CacheBlk*>(tags->findBlockBySetAndWay(it->set, 0));
 
-                    flipBit(*it, pkt, blkSize);
-                    DPRINTF(FaultTrace, "Intermittent fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
-                }else if(isIntervalOver(*it) && it->recovered == 0) {
-                    uint8_t* data = pkt->getPtr<uint8_t>();
-
-                    data[it->byteOffset - pkt->getOffset(blkSize)] = it->alteredByte; // recover the altered byte.
-                    it->recovered = 1;
-                    DPRINTF(FaultTrace, "Intermittent fault stuck at %d recovered at address %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
-                }
-            }else if(isTransient(*it) && it->tickStart <= curTick() && isRead && it->inserted == 0) {
-                flipBit(*it, pkt, blkSize);
-                it->inserted = 1;
-                DPRINTF(FaultTrace, "Transient fault stuck at %d injected to %#x\n", it->stuckAt, it->blockAddr + it->byteOffset);
-            }
-        }
+        if(blk && blk->isValid() && it->cacheToBeInserted == cacheType) {
+            flipBit(*it, blk, blkSize);
+        }    
     }
 }
 
