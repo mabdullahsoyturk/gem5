@@ -1,34 +1,39 @@
 import os
+import glob
+import concurrent.futures 
+from functools import partial
 import random
 import re
 import argparse
 import subprocess
 
+voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
+
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
 BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
-BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/input.txt'
+BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
 
 BENCH_BINARY = {
     'matrix_mul' : os.path.abspath(BENCH_BIN_HOME + '/matrix_multiplication/matrix_mul')
 }
+
+GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
+GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
 
 class ExperimentManager:
     ##
     #  example gem5 run:
     #    <gem5 bin> <gem5 options> <gem5 script> <gem5 script options>
     ##
-    GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
-    GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
-    FAULT_INPUT_PATH = os.path.abspath(WHERE_AM_I + '/inputs/input.txt')
+    def __init__(self, bench_name, flags, input_name, voltage):
+        self.bench_name = bench_name
+        self.flags = flags
+        self.input_name = input_name
+        self.voltage = voltage
 
-    number_of_crashes = 0
-    number_of_wrong_result = 0
-    number_of_correct_result = 0
-    
-    def run_golden(self, bench_name, flags):
-        open(BENCH_INPUT_HOME, 'w').close() # Empty fault file.
-
+    @staticmethod
+    def run_golden(bench_name, flags):
         redirection = '-re'
         outdir = '--outdir=' + bench_name + '_results/golden'
         stdout_file = '--stdout-file=output.txt'
@@ -42,66 +47,18 @@ class ExperimentManager:
 
         gem5_option = ' '.join([redirection, outdir, stdout_file, stderr_file, debug_file, debug_flags])
 
-        bench_binary = '-c ' + BENCH_BINARY[bench_name]
+        bench_binary_path = '-c ' + BENCH_BINARY[bench_name]
 
-        gem5_script_option = ' '.join([bench_binary])
+        input_path = '-i ' + BENCH_INPUT_HOME + "golden.txt"
 
-        gem5_command = ' '.join([self.GEM5_BINARY, gem5_option, self.GEM5_SCRIPT, gem5_script_option])
+        gem5_script_option = ' '.join([bench_binary_path, input_path])
+
+        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
+
         subprocess.call(gem5_command, shell=True)
 
-    def get_block_addresses(self, bench_name):
-        prepare_addresses = 'cd ' + WHERE_AM_I + '/' + bench_name + '_results/golden;' + 'grep "being updated in Cache" log.txt | grep -oh "0x[0-9a-z]*" > block_addresses'
-        subprocess.call(prepare_addresses, shell=True)
-
-        addresses = []
-
-        filepath = WHERE_AM_I + '/' + bench_name + '_results/golden/block_addresses'
-        with open(filepath) as fp:
-            line = fp.readline()
-            while line:
-                line = fp.readline()
-                line = line.strip()
-                
-                if(line):
-                    addresses.append(line)
-            fp.close()
-        
-        return addresses 
-
-    def get_last_cycle(self, bench_name):
-        get_cycle = 'cd ' + WHERE_AM_I + '/' + bench_name + '_results/golden;' + 'tail -1 log.txt | egrep -o "^[0-9]*"'
-        last_cycle = subprocess.Popen(get_cycle, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-
-        return last_cycle.decode('utf-8')
-
-    def create_random_faults(self,bench_name, number_of_faults):
-        addresses = self.get_block_addresses(bench_name)
-        last_cycle = self.get_last_cycle(bench_name).strip()
-
-        with open(WHERE_AM_I + "/inputs/input.txt", "w") as input_file:
-            for i in range(int(number_of_faults)):
-                fault_type = random.randint(0, 2)
-                fault_block_address = int(addresses[random.randint(0, len(addresses) - 1)], 16)
-                fault_byte_offset = random.randint(0,63)
-                fault_bit_offset = random.randint(0, 7)
-                fault_tick_start = 0
-                fault_tick_end = 0
-    
-                if(fault_type == 0):
-                    fault_tick_start = random.randint(0, int(last_cycle))
-                elif(fault_type == 1):
-                    fault_tick_start = random.randint(0, int(last_cycle))
-                    fault_tick_end = random.randint(fault_tick_start + 1, int(last_cycle))
-                
-                fault_stuck_at = random.randint(0,1)
-                fault_cache_type = "l1d" # for now
-
-                line = " ".join([str(fault_type),str(fault_block_address),str(fault_byte_offset),str(fault_bit_offset),str(fault_tick_start),str(fault_tick_end),str(fault_stuck_at),fault_cache_type]) + "\n"
-
-                input_file.write(line)
-
-    def is_crash(self, bench_name, iteration):
-        grep_crash = 'cd ' + WHERE_AM_I + '/' + bench_name + '_results/faulty/faulty' + str(iteration + 1) + ';grep "exiting with last active thread context" output.txt'
+    def is_crash(self):
+        grep_crash = 'cd ' + WHERE_AM_I + '/' + self.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + ';grep "exiting with last active thread context" output.txt'
         result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
         decoded_result = result.decode('utf-8')
 
@@ -110,8 +67,8 @@ class ExperimentManager:
         else:
             return True
     
-    def is_correct(self, bench_name, iteration, correct_result):
-        grep_result = 'cd ' + WHERE_AM_I + '/' + bench_name + '_results/faulty/faulty' + str(iteration + 1) + ';grep -oh "^[0-9].*" output.txt'
+    def is_correct(self, correct_result):
+        grep_result = 'cd ' + WHERE_AM_I + '/' + self.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + ';grep -oh "^[0-9].*" output.txt'
         sim_result = subprocess.Popen(grep_result, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 
         lines = sim_result.decode('utf-8').splitlines()
@@ -126,8 +83,8 @@ class ExperimentManager:
         else:
             return False
 
-    def get_correct_result(self, bench_name):
-        grep_correct_result = 'cd ' + WHERE_AM_I + '/' + bench_name + '_results/golden;grep -oh "^[0-9].*" output.txt'
+    def get_correct_result(self):
+        grep_correct_result = 'cd ' + WHERE_AM_I + '/' + self.bench_name + '_results/golden;grep -oh "^[0-9].*" output.txt'
         correct_result = subprocess.Popen(grep_correct_result, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 
         lines = correct_result.decode('utf-8').splitlines()
@@ -140,62 +97,68 @@ class ExperimentManager:
         return result
         
 
-    def inject_random(self, bench_name, flags, iteration, number_of_faults=1):
-        self.create_random_faults(bench_name, number_of_faults)
-
+    def inject(self):
         redirection = '-re'
-        outdir = '--outdir=' + bench_name + '_results/faulty/faulty' + str(iteration + 1)
+        outdir = '--outdir=' + self.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
+        debug_flags = ''
+
+        if self.flags and len(self.flags) > 0:
+            all_flags = ','.join(self.flags)
+            debug_flags = '--debug-flags=' + all_flags
 
         gem5_option = ' '.join([redirection, outdir, stdout_file, stderr_file, debug_file])
 
-        bench_binary = '-c ' + BENCH_BINARY[bench_name]
+        bench_binary_path = '-c ' + BENCH_BINARY[self.bench_name]
 
-        gem5_script_option = ' '.join([bench_binary])
+        input_path = '-i ' + BENCH_INPUT_HOME + voltage + "/" + self.input_name
 
-        gem5_command = ' '.join([self.GEM5_BINARY, gem5_option, self.GEM5_SCRIPT, gem5_script_option])
+        gem5_script_option = ' '.join([bench_binary_path, input_path])
+
+        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
 
         try:
-            subprocess.call(gem5_command, shell=True, timeout=20)
+            subprocess.call(gem5_command, shell=True, timeout=30)
         except subprocess.TimeoutExpired:
-            self.number_of_crashes += 1
-            return
+            return "Crash"
 
-        if self.is_crash(bench_name,iteration):
-            self.number_of_crashes += 1
-            return
+        if self.is_crash():
+            return "Crash"
 
-        correct_result = self.get_correct_result(bench_name)
-        
-        if(self.is_correct(bench_name, iteration, correct_result)):
-            self.number_of_correct_result += 1
+        correct_result = self.get_correct_result()
+
+        if(self.is_correct(correct_result)):
+            return "Correct"
         else:
-            self.number_of_wrong_result += 1
+            return "Incorrect"
+
+def run_experiment(input_path, bench_name, flags, voltage):
+    input_name = input_path.split("/")[-1]
+    experiment_manager = ExperimentManager(bench_name, flags, input_name, voltage)
+
+    result = experiment_manager.inject()
+
+    with open(WHERE_AM_I + "/" + bench_name + "_results" + "/" + voltage + "_results.txt", "a") as result_file:
+            line = ",".join([input_name[:-4], result + "\n"])
+            result_file.write(line)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c','--bench-name', help='Benchmark\'s name', default='matrix_mul')
-    parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags')
-    parser.add_argument('-n', '--number-of-faults', help='Number of faults', default=1)
-    parser.add_argument('-e', '--number-of-experiments', help='Number of experiments', default=1)
+    parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags', default=["Cache"])
 
     args = parser.parse_args()
-
-    experiment_manager = ExperimentManager()
-
-    experiment_manager.run_golden(args.bench_name, args.flags)
     
-    for iteration in range(int(args.number_of_experiments)):
-        experiment_manager.inject_random(args.bench_name, args.flags, iteration, args.number_of_faults)
+    open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
 
-    with open(WHERE_AM_I + '/' + args.bench_name + '_results/results.txt', "a") as result_file:
-        metadata = "Number of faults = " + args.number_of_faults + "\n"
-        result_file.write(metadata)
+    ExperimentManager.run_golden(args.bench_name, args.flags)
 
-        description = "".join(["No of correct\t", "No of wrong\t", "No of crash\n"])
-        result_file.write(description)
+    for voltage in voltages:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            input_paths = glob.glob(WHERE_AM_I + "/inputs/" + voltage + "/BRAM_*.txt")
 
-        line = "".join([str(experiment_manager.number_of_correct_result) + "\t", str(experiment_manager.number_of_wrong_result) + "\t", str(experiment_manager.number_of_crashes) + "\t\n\n\n"])
-        result_file.write(line)
+            method_with_params = partial(run_experiment, bench_name=args.bench_name, flags=args.flags, voltage=voltage)
+
+            executor.map(method_with_params, input_paths)

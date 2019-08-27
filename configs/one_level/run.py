@@ -8,8 +8,8 @@ input_file = "/home/muhammet/Downloads/gem5/inputs/input.txt"
 
 parser = OptionParser()
 
-parser.add_option("-c", "--binary", help="Binary of the program to be simulated", default=binary)
-parser.add_option("-i", "--input", help="Fault input file", default=input_file)
+parser.add_option("-c", "--bench-path", help="Binary of the program to be simulated", default=binary)
+parser.add_option("-i", "--input-path", help="Fault input file", default=input_file)
 
 (opts, args) = parser.parse_args()
 
@@ -29,11 +29,8 @@ system.membus = SystemXBar()
 system.cpu.icache = L1ICache(opts)
 system.cpu.dcache = L1DCache(opts)
 
-system.cpu.icache.fault_injector = FaultInjector(input_path=input_file)
-system.cpu.dcache.fault_injector = FaultInjector(input_path=input_file)
-
-system.cpu.icache.fault_injector.input_path = opts.input
-system.cpu.dcache.fault_injector.input_path = opts.input
+system.cpu.icache.fault_injector = FaultInjector(input_path=opts.input_path)
+system.cpu.dcache.fault_injector = FaultInjector(input_path=opts.input_path)
 
 system.cpu.icache.connectCPU(system.cpu)
 system.cpu.dcache.connectCPU(system.cpu)
@@ -59,7 +56,7 @@ system.mem_ctrl.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.master
 
 process = Process()
-process.cmd = [opts.binary]
+process.cmd = [opts.bench_path]
 # Set the cpu to use the process as its workload and create thread contexts
 system.cpu.workload = process
 system.cpu.createThreads()

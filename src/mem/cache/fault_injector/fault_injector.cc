@@ -14,10 +14,6 @@ void
 FaultInjector::init(std::string owner) 
 {
     std::ifstream ifs(inputPath);
-
-    if(ifs.fail()) {
-		fatal("Could not read the file.");
-    }
     
     int set,byteOffset,bitOffset;
     std::string cacheToBeInserted;
@@ -25,22 +21,24 @@ FaultInjector::init(std::string owner)
 
     DPRINTF(FaultTrace, "\t%s faults:\n\n", owner);
 
-	while(ifs >> set >> byteOffset >> bitOffset >> cacheToBeInserted){
-        if((cacheToBeInserted.compare(owner)) == 0) {
-            CacheFault fault;
-            fault.set = set;
-            fault.byteOffset = byteOffset;
-            fault.bitOffset = bitOffset;
-            fault.cacheToBeInserted = cacheToBeInserted;
+    if(ifs.is_open()) {
+        while(ifs >> set >> byteOffset >> bitOffset >> cacheToBeInserted){
+            if((cacheToBeInserted.compare(owner)) == 0) {
+                CacheFault fault;
+                fault.set = set;
+                fault.byteOffset = byteOffset;
+                fault.bitOffset = bitOffset;
+                fault.cacheToBeInserted = cacheToBeInserted;
 
-            faults.push_back(fault);
-            DPRINTF(FaultTrace, "Set: %#x, Byte Offset: %d, Bit Offset: %d\n", fault.set, fault.byteOffset, fault.bitOffset);
+                faults.push_back(fault);
+                DPRINTF(FaultTrace, "Set: %#x, Byte Offset: %d, Bit Offset: %d\n", fault.set, fault.byteOffset, fault.bitOffset);
 
-            numberOfFaults++;
-        }
-	}
+                numberOfFaults++;
+            }
+	    }
 
-    ifs.close();
+        ifs.close();   
+    }
 
     DPRINTF(FaultTrace, "Number of faults in total: %d", numberOfFaults);
 }
