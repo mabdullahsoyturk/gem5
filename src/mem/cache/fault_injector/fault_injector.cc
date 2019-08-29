@@ -40,7 +40,7 @@ FaultInjector::init(std::string owner)
         ifs.close();   
     }
 
-    DPRINTF(FaultTrace, "Number of faults in total: %d", numberOfFaults);
+    DPRINTF(FaultTrace, "Number of faults in total: %d\n", numberOfFaults);
 }
 
 void 

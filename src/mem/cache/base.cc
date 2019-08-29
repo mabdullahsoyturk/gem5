@@ -908,27 +908,10 @@ BaseCache::satisfyRequest(PacketPtr pkt, CacheBlk *blk, bool, bool)
         assert(blk->isWritable());
         // Write or WriteLine at the first cache with block in writable state
         if (blk->checkWrite(pkt)) {
-            /*uint8_t* pktData = pkt->getPtr<uint8_t>();
-            for(int i = 0; i < pkt->getSize(); i++) {
-                DPRINTF(Cache, "isWrite : Data of packet before injection %d : %d\n", i, pktData[i]);
-            }*/
-        
-            /*for(int i = 0; i < pkt->getSize(); i++) {
-                DPRINTF(Cache, "Data of packet after injection %d : %d\n", i, pktData[i]);
-            }*/
-
             pkt->writeDataToBlock(blk->data, blkSize);
             faultInjector->injectFaults(tags, blkSize, false, cacheType);
 
             DPRINTF(FlowTrace, "satisfyRequest isWrite worked for %#x\n", pkt->getAddr());
-
-            /*for(int i = 0; i < blkSize; i++) {
-                DPRINTF(Cache, "Data of block after injection %d : %d\n", i, blk->data[i]);
-            }*/
-
-            /* for(int i = 0; i < pkt->getSize(); i++) {
-                DPRINTF(Cache, "Data of packet after recovery %d : %d\n", i, pktData[i]);
-            }*/
         }
         // Always mark the line as dirty (and thus transition to the
         // Modified state) even if we are a failed StoreCond so we
@@ -941,40 +924,12 @@ BaseCache::satisfyRequest(PacketPtr pkt, CacheBlk *blk, bool, bool)
             blk->trackLoadLocked(pkt);
         }
 
-        if(pkt->getBlockAddr(blkSize) == 0x1c0dc0) {
-            DPRINTF(Cache, "Tag: %#x\n", pkt->getBlockAddr(blkSize) >> 11);
-
-            CacheBlk* blk = static_cast<CacheBlk*>(tags->findBlockBySetAndWay(0x17, 0));
-
-            if(blk) {
-                DPRINTF(Cache, "Yeap %d\n", blk->isValid() ? 1:0);
-            }else {
-                DPRINTF(Cache, "Nope\n");
-            }
-        }
-
         // all read responses have a data payload
         assert(pkt->hasRespData());
-
-        /*for(int i = 0; i < blkSize; i++) {
-            DPRINTF(Cache, "Data of block %d : %d\n", i, blk->data[i]);
-        }*/
-
-        /*uint8_t* pktData = pkt->getPtr<uint8_t>();
-        for(int i = 0; i < pkt->getSize(); i++) {
-            DPRINTF(Cache, "Data of packet before reading from block %d : %d\n", i, pktData[i]);
-        }*/
 
         faultInjector->injectFaults(tags, blkSize, true, cacheType);
 
         pkt->setDataFromBlock(blk->data, blkSize);
-        /*for(int i = 0; i < pkt->getSize(); i++) {
-            DPRINTF(Cache, "Data of packet after reading from block %d : %d\n", i, pktData[i]);
-        }*/
-
-        /*for(int i = 0; i < pkt->getSize(); i++) {
-            DPRINTF(Cache, "Data of packet after reading from block and after injection %d : %d\n", i, pktData[i]);
-        }*/
 
         DPRINTF(FlowTrace, "satisfyRequest isRead worked for %#x\n", pkt->getAddr());
     } else if (pkt->isUpgrade()) {
