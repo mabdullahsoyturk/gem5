@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import concurrent.futures 
 from functools import partial
@@ -12,16 +13,26 @@ voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
-BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
 BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
 
+BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
+
+BENCH_BIN_DIR = {
+    'matrix_mul' : os.path.abspath(BENCH_BIN_HOME + '/matrix_multiplication'),
+    'blackscholes': os.path.abspath(BENCH_BIN_HOME + '/blackscholes'),
+    'jacobi' : os.path.abspath(BENCH_BIN_HOME + '/jacobi'),
+    'Kmeans' : os.path.abspath(BENCH_BIN_HOME + '/Kmeans'),
+    'monteCarlo' : os.path.abspath(BENCH_BIN_HOME + '/monteCarlo'),
+    'sobel' : os.path.abspath(BENCH_BIN_HOME + '/sobel')
+}
+
 BENCH_BINARY = {
-    'matrix_mul' : os.path.abspath(BENCH_BIN_HOME + '/matrix_multiplication/matrix_mul'),
-    'blackscholes': os.path.abspath(BENCH_BIN_HOME + '/blackscholes/blackscholes'),
-    'jacobi' : os.path.abspath(BENCH_BIN_HOME + '/jacobi/jacobi'),
-    'Kmeans' : os.path.abspath(BENCH_BIN_HOME + '/Kmeans/seq_main'),
-    'monteCarlo' : os.path.abspath(BENCH_BIN_HOME + '/monteCarlo/monte_carlo'),
-    'sobel' : os.path.abspath(BENCH_BIN_HOME + '/sobel/sobel')
+    'matrix_mul' : os.path.abspath(BENCH_BIN_DIR["matrix_mul"] + '/matrix_mul'),
+    'blackscholes': os.path.abspath(BENCH_BIN_DIR["blackscholes"] + '/blackscholes'),
+    'jacobi' : os.path.abspath(BENCH_BIN_DIR["jacobi"] + '/jacobi'),
+    'Kmeans' : os.path.abspath(BENCH_BIN_DIR["Kmeans"] + '/seq_main'),
+    'monteCarlo' : os.path.abspath(BENCH_BIN_DIR["monteCarlo"] + '/monte_carlo'),
+    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/sobel')
 }
 
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
@@ -38,7 +49,7 @@ class ExperimentManager:
         self.input_name = input_name
 
     @staticmethod
-    def get_binary_options(args, voltage, is_golden = False, input_name=""):
+    def get_binary_options(args, voltage="", is_golden = False, input_name=""):
         bench_binary_options = ''
         blackscholes_input = "--blackscholes-input=" + args.blackscholes_input
 
@@ -46,7 +57,7 @@ class ExperimentManager:
             if(is_golden):
                 blackscholes_output = "--blackscholes-output=" + args.blackscholes_output
             else:
-                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_HOME + "/blackscholes/outputs/" + voltage + "/" + input_name
+                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR["blackscholes"] + "/outputs/" + voltage + "/" + input_name
 
             blackscholes_options = ' '.join([blackscholes_input, blackscholes_output])
             bench_binary_options = blackscholes_options
@@ -78,7 +89,10 @@ class ExperimentManager:
             bench_binary_options = monte_options
         elif(args.bench_name == "sobel"):
             sobel_input = "--sobel-input=" + args.sobel_input
-            sobel_output = "--sobel-output=" + args.sobel_output
+            if(is_golden):
+                sobel_output = "--sobel-output=" + args.sobel_output
+            else:
+                sobel_output = "--sobel-output=" + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name     
 
             sobel_options = ' '.join([sobel_input, sobel_output])
             bench_binary_options = sobel_options
@@ -86,7 +100,7 @@ class ExperimentManager:
         return bench_binary_options
 
     @staticmethod
-    def run_golden(args, voltage):
+    def run_golden(args):
         redirection = '-re'
         outdir = '--outdir=' + args.bench_name + '_results/golden'
         stdout_file = '--stdout-file=output.txt'
@@ -102,7 +116,7 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[args.bench_name]
 
-        bench_binary_options = ExperimentManager.get_binary_options(args, voltage, True)
+        bench_binary_options = ExperimentManager.get_binary_options(args, is_golden = True)
 
         input_path = '--input-path=' + BENCH_INPUT_HOME + "golden.txt"
 
@@ -122,51 +136,28 @@ class ExperimentManager:
         else:
             return True
 
-    def get_correct_result(self):
-        grep_correct_result = 'cd ' + WHERE_AM_I + '/results/' + self.bench_name + '_results/golden;grep -oh "^[0-9].*" output.txt'
-        correct_result = subprocess.Popen(grep_correct_result, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-
-        lines = correct_result.decode('utf-8').splitlines()
-
-        result = []
-
-        for i in range(len(lines)):
-            result.extend(lines[i].strip().split(" "))
-
-        return result
-    
     def is_correct(self):
         if(self.args.bench_name == "blackscholes"):
-            
+            pass
         elif(self.args.bench_name == "jacobi"):
-
+            pass
         elif(self.args.bench_name == "Kmeans"):
-
+            pass
         elif(self.args.bench_name == "monteCarlo"):
-
+            pass
         elif(self.args.bench_name == "sobel"):
-            output_path = self.args.sobel_output
-            golden_path = BENCH_BIN_HOME + "/sobel/figs/golden.grey"
+            output_path = BENCH_BIN_DIR["sobel"] + "/outputs/" + self.voltage + "/" + self.input_name
+            golden_path = BENCH_BIN_DIR["sobel"] + "/figs/golden.grey"
 
-            if(filecmp.cmp(output_path, golden_path, shallow=False)):
-                return True
-            else:
-                return False
+            try:
+                if(filecmp.cmp(output_path, golden_path, shallow=False)):
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                sys.exit(str(e))
         elif(self.args.bench_name == "matrix_mul"):
-            grep_result = 'cd ' + WHERE_AM_I + '/results/' + self.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + ';grep -oh "^[0-9].*" output.txt'
-            sim_result = subprocess.Popen(grep_result, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-
-            lines = sim_result.decode('utf-8').splitlines()
-
-            result = []
-
-            for i in range(len(lines)):
-                result.extend(lines[i].strip().split(" "))
-
-            if correct_result == result:
-                return True
-            else:
-                return False
+            pass
 
     def inject(self):
         redirection = '-re'
@@ -184,16 +175,16 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[self.args.bench_name]
 
-        bench_binary_options = ExperimentManager.get_binary_options(self.args, self.voltage, self.input_name)
+        bench_binary_options = ExperimentManager.get_binary_options(self.args, self.voltage, False, self.input_name)
 
         input_path = '--input-path ' + BENCH_INPUT_HOME + voltage + "/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
         gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
-
+        
         try:
-            subprocess.call(gem5_command, shell=True, timeout=30)
+            subprocess.check_call(gem5_command, shell=True, timeout=500)
         except subprocess.TimeoutExpired:
             return "Crash"
 
@@ -205,6 +196,29 @@ class ExperimentManager:
         else:
             return "Incorrect"
 
+def write_results(input_name, args, voltage, result):
+
+    with open(WHERE_AM_I + "/" + args.bench_name + "_results" + "/" + voltage + "_results.txt", "a") as result_file:
+        if(args.bench_name == "blackscholes"):
+            pass
+        elif(args.bench_name == "jacobi"):
+            pass
+        elif(args.bench_name == "Kmeans"):
+            pass
+        elif(args.bench_name == "monteCarlo"):
+            pass
+        elif(args.bench_name == "sobel"):
+            psnr = "0.0"
+
+            if(result != "Crash"):
+                psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_BIN_DIR["sobel"] + "/figs/golden.grey"
+                psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                psnr = psnr_string.split(":")[1].strip()
+
+            line = ",".join([input_name[:-4], result, psnr + "\n"])
+
+        result_file.write(line)
+
 def run_experiment(input_path, args, voltage):
     input_name = input_path.split("/")[-1]
     experiment_manager = ExperimentManager(args, input_name, voltage)
@@ -212,14 +226,12 @@ def run_experiment(input_path, args, voltage):
     result = experiment_manager.inject()
     print("Voltage: " + voltage + ", Fault input: " + input_name + ", Result: " + result)
 
-    with open(WHERE_AM_I + "/" + args.bench_name + "_results" + "/" + voltage + "_results.txt", "a") as result_file:
-            line = ",".join([input_name[:-4], result + "\n"])
-            result_file.write(line)
+    write_results(input_name, args, voltage, result)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c','--bench-name', help='Benchmark\'s name', default='matrix_mul')
-    parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags', default=["Cache"])
+    parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags')
 
     # Options for blackscholes application : example run: ./blackscholes <inputFile> <outputFile>
     parser.add_argument("--blackscholes-input", help="Input file for blackscholes application", default="")
@@ -253,7 +265,7 @@ if __name__ == '__main__':
     
     open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
 
-    ExperimentManager.run_golden(args, voltage)
+    #ExperimentManager.run_golden(args)
 
     for voltage in voltages:
         with concurrent.futures.ProcessPoolExecutor() as executor:
