@@ -6,12 +6,12 @@ from optparse import OptionParser
 
 BENCH_BIN_HOME = '/home/muhammet/Downloads/gem5/tests/test-progs'
 
-binary = BENCH_BIN_HOME + "/matrix_multiplication/matrix_mul"
 input_file = "/home/muhammet/Downloads/gem5/inputs/golden.txt"
 
 parser = OptionParser()
 
-parser.add_option("-c", "--bench-path", help="Binary of the program to be simulated", default=binary)
+parser.add_option("-c", "--bench-path", help="Binary of
+                            the program to be simulated")
 parser.add_option("--input-path", help="Fault input file", default=input_file)
 
 # Options for blackscholes application : example run: ./blackscholes <inputFile> <outputFile>
@@ -41,6 +41,10 @@ parser.add_option("--monte-output", help="Output file", default="")
 # Options for sobel application : example run: ./sobel 'input file' 'output file' 
 parser.add_option("--sobel-input", help="Input file", default="")
 parser.add_option("--sobel-output", help="Output file", default="")
+
+# Options for matrix multiplication application :
+#example run: ./matrix_mul 'output file'
+parser.add_option("--matrix-output", help="Output file", default="output.txt")
 
 (opts, args) = parser.parse_args()
 
@@ -99,7 +103,7 @@ elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/monteCarlo/monte_carl
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/sobel/sobel')):
     process.cmd = [opts.bench_path] + [opts.sobel_input, opts.sobel_output]
 else:
-    process.cmd = [opts.bench_path]
+    process.cmd = [opts.bench_path] + [opts.matrix_output]
 # Set the cpu to use the process as its workload and create thread contexts
 system.cpu.workload = process
 system.cpu.createThreads()

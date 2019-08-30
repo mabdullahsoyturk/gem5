@@ -10,7 +10,7 @@ import subprocess
 import filecmp
 
 #voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
-voltages = [ "0.60V"]
+voltages = ["0.59V"]
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
@@ -109,6 +109,17 @@ class ExperimentManager:
 
             sobel_options = ' '.join([sobel_input, sobel_output])
             bench_binary_options = sobel_options
+        elif(args.bench_name == "matrix_mul"):
+            matrix_output = ""
+            if(is_golden):
+                matrix_output = "--matrix-output=" + args.matrix_output
+            else:
+                matrix_output = "--matrix-output=" +
+                                BENCH_BIN_DIR["matrix_mul"]
+                                + "/outputs/" + voltage + "/" + input_name
+
+            matrix_options = ' '.join([matrix_output])
+            bench_binary_options = matrix_options
 
         return bench_binary_options
 
@@ -144,9 +155,23 @@ class ExperimentManager:
             sys.exit(str(e))
     
     def is_internal_error(self):
-        grep_error = 'grep "Error" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
-        error_result = subprocess.Popen(grep_error, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-        error_decoded_result = error_result.decode('utf-8')
+        grep_error = 'grep "Error" '
+                    + WHERE_AM_I + '/'
+                    + self.args.bench_name
+                    + '_results/faulty/'
+                    + self.voltage
+                    + "/" + self.input_name
+                    + "/output.txt"
+        error_result = ""
+        error_decoded_result = ""
+        try:
+            error_result = subprocess.Popen(grep_error, shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE).communicate()[0]
+            error_decoded_result = error_result.decode('utf-8')
+        except Exception as e:
+            print(str(e))
+            print("is_internal_error grep does not work properly")
 
         if error_decoded_result and len(error_decoded_result) > 0:
             return True
@@ -155,8 +180,14 @@ class ExperimentManager:
 
     def is_crash(self):
         grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
-        result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-        decoded_result = result.decode('utf-8')
+        result = ""
+        decoded_result = ""
+
+        try:
+            result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+            decoded_result = result.decode('utf-8')
+        except Exception as e:
+            print(str(e))
 
         if decoded_result and len(decoded_result) > 0:
             return False
@@ -164,7 +195,7 @@ class ExperimentManager:
             return True
 
     def is_correct(self):
-        if(self.args.bench_name == "blackscholes" or self.args.bench_name == "jacobi" or self.args.bench_name == "monteCarlo"):
+        if(self.args.bench_name == "blackscholes" or self.args.bench_name == "jacobi" or self.args.bench_name == "monteCarlo" or self.args.bench_name == "matrix_mul"):
             golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/output.txt"
             output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
@@ -179,8 +210,8 @@ class ExperimentManager:
         elif(self.args.bench_name == "Kmeans"):
             pass
         elif(self.args.bench_name == "sobel"):
-            golden_path = BENCH_BIN_DIR["sobel"] + "/figs/golden.grey"
-            output_path = BENCH_BIN_DIR["sobel"] + "/outputs/" + self.voltage + "/" + self.input_name
+            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/figs/golden.grey"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
@@ -190,8 +221,6 @@ class ExperimentManager:
             except Exception as e:
                 print(str(e))
                 sys.exit(str(e))
-        elif(self.args.bench_name == "matrix_mul"):
-            pass
 
     def inject(self):
         redirection = '-re'
@@ -218,10 +247,11 @@ class ExperimentManager:
         gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
         
         try:
-            subprocess.check_call(gem5_command, shell=True, timeout=300)
+            subprocess.check_call(gem5_command, shell=True, timeout=1800)
         except subprocess.TimeoutExpired:
-            print("Timeout expired")
             return "Crash"
+        except Exception as e:
+            return "InternalError"
 
         if(self.is_internal_error()):
             return "InternalError"
@@ -242,7 +272,8 @@ def write_results(input_name, args, voltage, result):
             ABSE = "1.0"
 
             if(result != "Crash" and result != "InternalError"):
-                error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + args.blackscholes_output + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
+                output_name = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
+                error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + output_name + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
                 error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 output = error_string.split(",")
                 RE = output[0].strip()
@@ -256,11 +287,19 @@ def write_results(input_name, args, voltage, result):
             RE = "1.0"
 
             if(result != "Crash" and result != "InternalError"):
-                calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_BIN_DIR["monteCarlo"] + "/figs/golden.grey"
-                calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + args.monte_output + " " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
+                calc_errors_string = ''
+                try:
+                    calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                except Exception as e:
+                    print("Exception while writing results")
+                    print(str(e))
                 output = calc_errors_string.split(",")
                 MSE = output[0].strip()
                 RE = output[1].strip()
+
+                print("MSE " + MSE)
+                print("RE " + RE)
 
             line = ",".join([input_name[:-4], result, MSE, RE + "\n"])
         elif(args.bench_name == "sobel"):
@@ -272,6 +311,8 @@ def write_results(input_name, args, voltage, result):
                 psnr = psnr_string.split(":")[1].strip()
 
             line = ",".join([input_name[:-4], result, psnr + "\n"])
+        elif(args.bench_name == "matrix_mul"):
+            line = ",".join([input_name[:-4], result + "\n"])
 
         result_file.write(line)
 
@@ -317,13 +358,14 @@ if __name__ == '__main__':
     parser.add_argument("--sobel-input", help="Input file", default="")
     parser.add_argument("--sobel-output", help="Output file", default="")
 
+    # Options for matrix multiplication application : example run: ./matrix_mul 'output file'
+    parser.add_argument("--matrix-output", help="Output file", default="output.txt")
+
     args = parser.parse_args()
     
     open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
     
     ExperimentManager.run_golden(args)
-
-    print("Golden finished")
 
     for voltage in voltages:
         with concurrent.futures.ProcessPoolExecutor() as executor:
