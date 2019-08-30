@@ -9,7 +9,8 @@ import argparse
 import subprocess
 import filecmp
 
-voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
+#voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
+voltages = [ "0.60V"]
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
@@ -106,7 +107,7 @@ class ExperimentManager:
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
-        debug_flags = ''
+        debug_flags = '-debug-flags=FaultTrace'
 
         if args.flags and len(args.flags) > 0:
             all_flags = ','.join(args.flags)

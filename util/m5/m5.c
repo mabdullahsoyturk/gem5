@@ -250,6 +250,13 @@ do_exec_file(int argc, char *argv[])
 }
 
 void
+do_fault_injection(int argc, char *argv[]){
+    uint64_t ints[2];
+    parse_int_args(argc, argv, ints, 2);
+    fi_activate(ints[0],ints[1]);
+}
+
+void
 do_checkpoint(int argc, char *argv[])
 {
     uint64_t ints[2];
