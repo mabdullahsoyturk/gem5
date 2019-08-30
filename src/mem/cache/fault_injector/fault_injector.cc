@@ -6,9 +6,16 @@
 #include "debug/Cache.hh"
 #include "debug/FaultTrace.hh"
 
-FaultInjector::FaultInjector(FaultInjectorParams *params) : 
-    SimObject(params),inputPath(params->input_path)
-{}
+FaultInjector *gFIptr;
+
+FaultInjector::FaultInjector(FaultInjectorParams *params) :
+    SimObject(params),inputPath(params->input_path),enabled(false)
+{
+    gFIptr = this;
+}
+
+
+
 
 void 
 FaultInjector::init(std::string owner) 
@@ -57,10 +64,17 @@ FaultInjector::flipBit(CacheFault fault, CacheBlk* blk, unsigned blkSize)
 void 
 FaultInjector::injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::string cacheType) 
 {
-    for(std::vector<CacheFault>::iterator it = faults.begin(); it != faults.end(); ++it) {
-        CacheBlk* blk = static_cast<CacheBlk*>(tags->findBlockBySetAndWay(it->set, 0));
 
-        if(blk && blk->isValid() && it->cacheToBeInserted == cacheType) {
+    if (!enabled) {
+        DPRINTF(FaultTrace, "I am skipping fault Injection\n");
+        return;
+    }
+
+    for (std::vector<CacheFault>::iterator it = faults.begin();
+                                        it != faults.end(); ++it) {
+        CacheBlk* blk = static_cast<CacheBlk*>
+                        (tags->findBlockBySetAndWay(it->set, 0));
+        if (blk && blk->isValid() && it->cacheToBeInserted == cacheType) {
             flipBit(*it, blk, blkSize);
         }    
     }
@@ -70,3 +84,17 @@ FaultInjector* FaultInjectorParams::create()
 {
     return new FaultInjector(this);
 }
+
+void
+FaultInjector::enableFI(){
+    DPRINTF(FaultTrace, "I am enabling fault injection\n");
+    enableFI();
+}
+
+void
+FaultInjector:: disableFI(){
+    DPRINTF(FaultTrace, "I am disabling fault injection\n");
+    disableFI();
+}
+
+

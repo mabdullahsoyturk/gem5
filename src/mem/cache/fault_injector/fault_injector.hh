@@ -32,6 +32,8 @@ struct CacheFault {
     std::string cacheToBeInserted;
 };
 
+extern FaultInjector *gFIptr;
+
 class FaultInjector : public SimObject
 {
     private:
@@ -40,6 +42,8 @@ class FaultInjector : public SimObject
 
         /** Vector that contains faults.  */
         std::vector<CacheFault> faults;
+
+        bool enabled;
 
     public:
         FaultInjector(FaultInjectorParams *p);
@@ -69,6 +73,9 @@ class FaultInjector : public SimObject
          * @param cacheType Parameter to understand which cache performs the request.
         */
         void injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::string cacheType);
+
+        void enableFI();
+        void disableFI();
 };
 
 #endif // __MEM_CACHE_FAULT_INJECTOR_HH__
