@@ -250,18 +250,18 @@ do_exec_file(int argc, char *argv[])
 }
 
 void
-do_fault_injection(int argc, char *argv[]){
-    uint64_t ints[2];
-    parse_int_args(argc, argv, ints, 2);
-    fi_activate(ints[0],ints[1]);
+do_fault_injection(){
+//    uint64_t ints[2];
+//    parse_int_args(argc, argv, ints, 2);
+    fi_activate(0,0);
 }
 
 void
-do_checkpoint(int argc, char *argv[])
+do_checkpoint()
 {
     uint64_t ints[2];
-    parse_int_args(argc, argv, ints, 2);
-    m5_checkpoint(ints[0], ints[1]);
+//    parse_int_args(argc, argv, ints, 2);
+    m5_checkpoint(0,0);
 }
 
 void
@@ -385,11 +385,16 @@ int
 main(int argc, char *argv[])
 {
     progname = argv[0];
-    if (argc < 2)
-        usage(1);
+//    if (argc < 2)
+//        usage(1);
+    printf("I am happy\n");
+    sleep(1);
+//    map_m5_mem();
+//    do_checkpoint();
 
-    map_m5_mem();
-
+    do_fault_injection();
+/*
+    command = "dumpstats";
     command = argv[1];
 
     argv += 2;
@@ -405,4 +410,5 @@ main(int argc, char *argv[])
     }
 
     usage(1);
+    */
 }

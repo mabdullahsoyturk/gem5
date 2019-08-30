@@ -214,6 +214,7 @@
                         warn("M5 reserved opcode 2 ignored.\n");
                     }}, IsNonSpeculative);
                     0x57: fi_activate_inst({{
+                        warn("FI_ACTIVATE.\n");
                         PseudoInst::fi_activate(xc->tcBase(), Rdi, Rsi);
                     }}, IsNonSpeculative);
                     0x58: m5reserved4({{

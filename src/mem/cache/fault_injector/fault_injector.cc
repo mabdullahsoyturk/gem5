@@ -64,10 +64,8 @@ FaultInjector::injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::
 {
 
     if (!enabled) {
-        DPRINTF(FaultTrace, "I am skipping fault Injection\n");
         return;
     }
-
     for (std::vector<CacheFault>::iterator it = faults.begin();
                                         it != faults.end(); ++it) {
         CacheBlk* blk = static_cast<CacheBlk*>
@@ -86,13 +84,13 @@ FaultInjector* FaultInjectorParams::create()
 void
 FaultInjector::enableFI(){
     DPRINTF(FaultTrace, "I am enabling fault injection\n");
-    enableFI();
+    enabled = true;
 }
 
 void
 FaultInjector:: disableFI(){
     DPRINTF(FaultTrace, "I am disabling fault injection\n");
-    disableFI();
+    enabled=false;
 }
 
 
