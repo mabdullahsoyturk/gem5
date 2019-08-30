@@ -97,8 +97,6 @@ elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/Kmeans/seq_main')):
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/monteCarlo/monte_carlo')):
     process.cmd = [opts.bench_path] + [opts.monte_x, opts.monte_y, opts.monte_walks, opts.monte_tasks, opts.monte_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/sobel/sobel')):
-    print("Here is the sobel input: " + opts.sobel_input)
-    print("Here is the sobel output: " + opts.sobel_output)
     process.cmd = [opts.bench_path] + [opts.sobel_input, opts.sobel_output]
 else:
     process.cmd = [opts.bench_path]

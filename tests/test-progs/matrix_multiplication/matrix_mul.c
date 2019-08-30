@@ -1,6 +1,4 @@
-#include <iostream> 
-  
-using namespace std; 
+#include <stdio.h> 
   
 #define N 512 
 
@@ -19,9 +17,16 @@ void multiply(int matrix1[][N], int matrix2[][N], int result[][N])
     } 
 } 
   
-// Driver Code 
-int main() 
+int main(int argc, char **argv) 
 { 
+    if (argc != 2)
+    {
+        printf("Usage:\n\t%s <outputFile>\n", argv[0]);
+        exit(1);
+    }
+
+    FILE* output_file = fopen(argv[1], "w");
+
     int i, j; 
     int result[N][N];
 
@@ -42,9 +47,9 @@ int main()
     for (i = 0; i < N; i++) 
     { 
         for (j = 0; j < N; j++) {
-            cout << result[i][j] << " "; 
+            printf("%d ", result[i][j]); 
         } 
-        cout << "\n"; 
+        printf("\n");
     } 
   
     return 0; 

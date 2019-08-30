@@ -183,6 +183,7 @@ int main(int argc, char* argv[])
 	if ( argc != 6 )
 	{
 		printf("usage: %s ''N_X'' ''N_Y'' ''WALKS'' ''TASKS'' ''OUTPUT''\n", argv[0]);
+		printf("Error");
 		exit(1);
 	}
 	
