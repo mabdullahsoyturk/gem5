@@ -17,10 +17,10 @@
 all: seq quality 
 
 CC             = gcc
-
-INCFLAGS    = -I.
+LIBS=../../lib/m5op_x86.o ../../lib/m5_mmap.o
+INCFLAGS    = -I. -I../../include/
 OPTFLAGS    = -O3 
-CFLAGS      = $(OPTFLAGS) $(DFLAGS) $(INCFLAGS)
+CFLAGS      = --static $(OPTFLAGS) $(DFLAGS) $(INCFLAGS) -DFI
 H_FILES     = kmeans.h
 COMM_SRC = file_io.c util.c
 SEQ_SRC     = seq_main.c   \
@@ -33,24 +33,24 @@ COMPARE_OBJ = $(COMPARE_SRC:%.c=%.o) $(COMM_SRC:%.c=%.o)
 $(SEQ_OBJ): $(H_FILES)
 
 seq_main.o: seq_main.c $(H_FILES)
-	$(CC) $(CFLAGS) -static -c $*.c
+	$(CC) $(CFLAGS) -c $*.c
 
 seq_kmeans.o: seq_kmeans.c $(H_FILES)
-	$(CC) $(CFLAGS) -static -c $*.c
+	$(CC) $(CFLAGS) -c $*.c
 
 wtime.o: wtime.c
-	$(CC) $(CFLAGS) -static -c $*.c
+	$(CC) $(CFLAGS) -c $*.c
 
 compare.o: compare.c
-	$(CC) $(CFLAGS) -static -c $*.c
+	$(CC) $(CFLAGS) -c $*.c
 
 seq: seq_main
 seq_main: $(SEQ_OBJ) $(H_FILES)
-	$(CC) $(LDFLAGS) -static -o $@ $(SEQ_OBJ) $(LIBS)
+	$(CC) --static $(LDFLAGS) -o $@ $(SEQ_OBJ) $(LIBS)
 
 quality: compare
 compare: $(COMPARE_OBJ) $(H_FILES) 
-	$(CC) $(LDFLAGS) -static -o $@ $(COMPARE_OBJ) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(COMPARE_OBJ) $(LIBS)
 
 IMAGE_FILES =   color100.txt   color17695.bin   color17695.nc \
                  edge100.txt    edge17695.bin    edge17695.nc \

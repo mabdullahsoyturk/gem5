@@ -26,6 +26,11 @@
 #include <fcntl.h>
 #include <unistd.h>     /* getopt() */
 
+#ifdef FI 
+#warning I am in here
+#include <m5ops.h>
+#endif
+
 int      _debug;
 #include "kmeans.h"
 
@@ -43,6 +48,7 @@ static void usage(char *argv0, float threshold) {
     char *help =
         "Usage: %s [switches] -i filename -n num_clusters\n"
         "       -i filename    : file containing data to be clustered\n"
+        "       -w filename    : prefix of output files \n"
         "       -c centers     : file containing initial centers. default: filename\n"
         "       -b             : input file is in binary format (default no)\n"
         "       -n num_clusters: number of clusters (K must > 1)\n"
@@ -69,6 +75,7 @@ int main(int argc, char **argv) {
            float **clusters;      /* [numClusters][numCoords] cluster center */
            float   threshold;
            double  timing, io_timing, clustering_timing;
+           char *outputName;
 
     /* some default values */
     _debug           = 0;
@@ -79,8 +86,9 @@ int main(int argc, char **argv) {
     is_output_timing = 0;
     filename         = NULL;
     center_filename  = NULL;
+    outputName = NULL;
 
-    while ( (opt=getopt(argc,argv,"p:i:c:n:t:abdohq"))!= EOF) {
+    while ( (opt=getopt(argc,argv,"p:i:c:n:t:w:abdohqw"))!= EOF) {
         switch (opt) {
             case 'i': filename=optarg;
                       break;
@@ -97,6 +105,10 @@ int main(int argc, char **argv) {
             case 'q': verbose = 0;
                       break;
             case 'd': _debug = 1;
+                      break;
+            case 'w': 
+                      printf("I am assigning name\n");
+                      outputName=optarg;
                       break;
             case 'h':
             default: usage(argv[0], threshold);
@@ -176,8 +188,13 @@ int main(int argc, char **argv) {
     /* membership: the cluster id for each data object */
     membership = (int*) malloc(numObjs * sizeof(int));
     assert(membership != NULL);
-
+#ifdef FI
+   fi_activate(0,START); 
+#endif
     seq_kmeans(objects, numCoords, numObjs, numClusters, threshold, membership, clusters);
+#ifdef FI
+   fi_activate(0,STOP); 
+#endif
 
     free(objects[0]);
     free(objects);
@@ -188,7 +205,8 @@ int main(int argc, char **argv) {
     }
 
     /* output: the coordinates of the cluster centres ----------------------*/
-    file_write(filename, numClusters, numObjs, numCoords, clusters,
+    /*Now I am writing on the output */
+    file_write(outputName, numClusters, numObjs, numCoords, clusters,
                membership, verbose);
 
     free(membership);
