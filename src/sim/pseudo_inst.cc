@@ -41,6 +41,7 @@
  * Authors: Nathan Binkert
  */
 
+
 #include "sim/pseudo_inst.hh"
 
 #include <fcntl.h>
@@ -68,6 +69,7 @@
 #include "debug/WorkItems.hh"
 #include "dev/net/dist_iface.hh"
 #include "kern/kernel_stats.hh"
+#include "mem/cache/fault_injector/fault_injector.hh"
 #include "params/BaseCPU.hh"
 #include "sim/full_system.hh"
 #include "sim/initparam_keys.hh"
@@ -710,6 +712,24 @@ workend(ThreadContext *tc, uint64_t workid, uint64_t threadid)
             //
             exitSimLoop("work items exit count reached");
         }
+    }
+}
+
+void
+fi_activate(ThreadContext *tc, uint64_t threadid, uint64_t req){
+    // Thread Id Is ignored at this point
+    switch (req ){
+        case START:
+            gFIptr->enableFI();
+            DPRINTF(FaultTrace, "START Request\n");
+            break;
+        case STOP:
+            gFIptr->disableFI();
+            DPRINTF(FaultTrace, "STOP Request\n");
+            break;
+        default:
+            DPRINTF(FaultTrace, "This Request does not exist I ignore it\n");
+            break;
     }
 }
 

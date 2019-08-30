@@ -44,9 +44,12 @@
 #define __SIM_PSEUDO_INST_HH__
 
 class ThreadContext;
+#define START 0
+#define STOP 1
 
 //We need the "Tick" and "Addr" data types from here
 #include "base/types.hh"
+#include "debug/FaultTrace.hh"
 
 namespace PseudoInst {
 
@@ -89,6 +92,9 @@ void switchcpu(ThreadContext *tc);
 void workbegin(ThreadContext *tc, uint64_t workid, uint64_t threadid);
 void workend(ThreadContext *tc, uint64_t workid, uint64_t threadid);
 void togglesync(ThreadContext *tc);
+
+//FI Instructions
+void fi_activate(ThreadContext *tc, uint64_t threadId, uint64_t req);
 
 } // namespace PseudoInst
 

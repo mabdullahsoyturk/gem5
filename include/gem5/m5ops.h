@@ -84,6 +84,8 @@ void m5a_l(char *lsm, const void *id, char *sm);
 void m5a_identify(uint64_t id);
 uint64_t m5a_getid(void);
 
+void fi_activate(uint64_t threadId, uint64_t req);
+
 #ifdef __cplusplus
 }
 #endif

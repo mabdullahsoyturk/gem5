@@ -128,7 +128,7 @@ class ExperimentManager:
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
-        debug_flags = ''
+        debug_flags = '-debug-flags=FaultTrace'
 
         if args.flags and len(args.flags) > 0:
             all_flags = ','.join(args.flags)
