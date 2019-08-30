@@ -201,6 +201,7 @@ pseudoInst(ThreadContext *tc, uint8_t func, uint8_t subfunc)
 
       case M5OP_ANNOTATE:
       case M5OP_RESERVED2:
+          break;
       case FI_ACTIVATE_INST:
           fi_activate(tc, args[0],args[1]);
           break;

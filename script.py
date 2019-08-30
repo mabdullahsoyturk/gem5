@@ -114,9 +114,7 @@ class ExperimentManager:
             if(is_golden):
                 matrix_output = "--matrix-output=" + args.matrix_output
             else:
-                matrix_output = "--matrix-output=" +
-                                BENCH_BIN_DIR["matrix_mul"]
-                                + "/outputs/" + voltage + "/" + input_name
+                matrix_output = "--matrix-output=" + BENCH_BIN_DIR["matrix_mul"] + "/outputs/" + voltage + "/" + input_name
 
             matrix_options = ' '.join([matrix_output])
             bench_binary_options = matrix_options
@@ -130,7 +128,7 @@ class ExperimentManager:
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
-        debug_flags = '-debug-flags=FaultTrace'
+        debug_flags = '--debug-flags=FaultTrace'
 
         if args.flags and len(args.flags) > 0:
             all_flags = ','.join(args.flags)
@@ -155,13 +153,7 @@ class ExperimentManager:
             sys.exit(str(e))
     
     def is_internal_error(self):
-        grep_error = 'grep "Error" '
-                    + WHERE_AM_I + '/'
-                    + self.args.bench_name
-                    + '_results/faulty/'
-                    + self.voltage
-                    + "/" + self.input_name
-                    + "/output.txt"
+        grep_error = 'grep "Error" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
         error_result = ""
         error_decoded_result = ""
         try:

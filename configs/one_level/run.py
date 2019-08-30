@@ -4,14 +4,13 @@ from m5.objects import *
 from caches import *
 from optparse import OptionParser
 
-BENCH_BIN_HOME = '/home/muhammet/Downloads/gem5/tests/test-progs'
+BENCH_BIN_HOME = '/home/koparasy/Developing/papers/date/FaultModel/gem5/tests/test-progs'
 
 input_file = "/home/muhammet/Downloads/gem5/inputs/golden.txt"
 
 parser = OptionParser()
 
-parser.add_option("-c", "--bench-path", help="Binary of
-                            the program to be simulated")
+parser.add_option("-c", "--bench-path", help="Binary of the program to be simulated")
 parser.add_option("--input-path", help="Fault input file", default=input_file)
 
 # Options for blackscholes application : example run: ./blackscholes <inputFile> <outputFile>
