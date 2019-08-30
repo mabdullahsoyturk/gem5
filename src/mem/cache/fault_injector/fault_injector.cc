@@ -15,8 +15,6 @@ FaultInjector::FaultInjector(FaultInjectorParams *params) :
 }
 
 
-
-
 void 
 FaultInjector::init(std::string owner) 
 {
