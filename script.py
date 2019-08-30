@@ -10,7 +10,7 @@ import subprocess
 import filecmp
 
 #voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
-voltages = ["0.60V"]
+voltages = ["0.59V"]
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
@@ -154,8 +154,14 @@ class ExperimentManager:
     
     def is_internal_error(self):
         grep_error = 'grep "Error" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
-        error_result = subprocess.Popen(grep_error, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-        error_decoded_result = error_result.decode('utf-8')
+        error_result = ""
+        error_decoded_result = ""
+        try:
+            error_result = subprocess.Popen(grep_error, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+            error_decoded_result = error_result.decode('utf-8')
+        except Exception as e:
+            print(str(e))
+            print("is_internal_error grep does not work properly")
 
         if error_decoded_result and len(error_decoded_result) > 0:
             return True
@@ -164,8 +170,14 @@ class ExperimentManager:
 
     def is_crash(self):
         grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
-        result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-        decoded_result = result.decode('utf-8')
+        result = ""
+        decoded_result = ""
+
+        try:
+            result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+            decoded_result = result.decode('utf-8')
+        except Exception as e:
+            print(str(e))
 
         if decoded_result and len(decoded_result) > 0:
             return False
@@ -225,9 +237,11 @@ class ExperimentManager:
         gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
         
         try:
-            subprocess.check_call(gem5_command, shell=True, timeout=600)
+            subprocess.check_call(gem5_command, shell=True, timeout=1800)
         except subprocess.TimeoutExpired:
             return "Crash"
+        except Exception as e:
+            return "InternalError"
 
         if(self.is_internal_error()):
             return "InternalError"
@@ -263,11 +277,19 @@ def write_results(input_name, args, voltage, result):
             RE = "1.0"
 
             if(result != "Crash" and result != "InternalError"):
-                calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_BIN_DIR["monteCarlo"] + "/figs/golden.grey"
-                calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + args.monte_output + " " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
+                calc_errors_string = ''
+                try:
+                    calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                except Exception as e:
+                    print("Exception while writing results")
+                    print(str(e))
                 output = calc_errors_string.split(",")
                 MSE = output[0].strip()
                 RE = output[1].strip()
+
+                print("MSE " + MSE)
+                print("RE " + RE)
 
             line = ",".join([input_name[:-4], result, MSE, RE + "\n"])
         elif(args.bench_name == "sobel"):
