@@ -151,33 +151,34 @@ int main(int argc, char* argv[]) {
 
     if (argc != 6){
         printf("usage ./jacobi 'long:N' 'double:itol' 'bool:diagonally_dominant' 'long:max_iters'  'string:output_file'\n");
+	printf("Error");
         return(1);
     }
 
     N = strtol(argv[1], &endptr, 10);
 
     if ( *endptr != '\0' ) {
-        printf("Invalid input. First argument (N) must be a long represented"
+        printf("Error:Invalid input. First argument (N) must be a long represented"
                 " in base 10.\n");
         return 1;
     }
     itol = strtod(argv[2], &endptr);
     if ( *endptr != '\0' ) {
-        printf("Invalid input. Second argument (itol) must be a double represented"
+        printf("Error:Invalid input. Second argument (itol) must be a double represented"
                 " in base 10.\n");
         return 1;
     }
 
     diagonally_dominant = strtol(argv[3], &endptr, 10);
     if ( *endptr != '\0' ) {
-        printf("Invalid input. Third argument (diagonally_dominant) must be a"
+        printf("Error:Invalid input. Third argument (diagonally_dominant) must be a"
                 " long represented in base 10.\n");
         return 1;
     }
 
     iters = strtod(argv[4], &endptr);
     if ( *endptr != '\0' ) {
-        printf("Invalid input. Fourth argument (max_iters) must be a double"
+        printf("Error:Invalid input. Fourth argument (max_iters) must be a double"
                 " represented in base 10.\n");
         return 1;
     }

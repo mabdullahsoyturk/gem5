@@ -210,6 +210,7 @@ int main (int argc, char **argv)
     if (argc != 3)
     {
         printf("Usage:\n\t%s <nthreads> <inputFile> <outputFile>\n", argv[0]);
+	printf("Error");
         exit(1);
     }
     char *inputFile = argv[1];
@@ -219,12 +220,12 @@ int main (int argc, char **argv)
     //Read input data from file
     file = fopen(inputFile, "r");
     if(file == NULL) {
-        printf("ERROR: Unable to open file `%s'.\n", inputFile);
+        printf("Error: Unable to open file `%s'.\n", inputFile);
         exit(1);
     }
     rv = fscanf(file, "%i", &numOptions);
     if(rv != 1) {
-        printf("ERROR: Unable to read from file `%s'.\n", inputFile);
+        printf("Error: Unable to read from file `%s'.\n", inputFile);
         fclose(file);
         exit(1);
     }
@@ -241,14 +242,14 @@ int main (int argc, char **argv)
     {
         rv = fscanf(file, "%lf %lf %lf %lf %lf %lf %c %lf %lf", &data[loopnum].s, &data[loopnum].strike, &data[loopnum].r, &data[loopnum].divq, &data[loopnum].v, &data[loopnum].t, &data[loopnum].OptionType, &data[loopnum].divs, &data[loopnum].DGrefval);
         if(rv != 9) {
-            printf("ERROR: Unable to read from file `%s'.\n", inputFile);
+            printf("Error: Unable to read from file `%s'.\n", inputFile);
             fclose(file);
             exit(1);
         }
     }
     rv = fclose(file);
     if(rv != 0) {
-        printf("ERROR: Unable to close file `%s'.\n", inputFile);
+        printf("Error: Unable to close file `%s'.\n", inputFile);
         exit(1);
     }
 
@@ -285,14 +286,14 @@ int main (int argc, char **argv)
 
     file = fopen(outputFile, "wb");
     if(file == NULL) {
-        printf("ERROR: Unable to open file `%s'.\n", outputFile);
+        printf("Error: Unable to open file `%s'.\n", outputFile);
         exit(1);
     }
     
     int res = fwrite(&numOptions,sizeof(int),1,file);
 
     if(res != 1) {
-        printf("ERROR: Unable to write to file `%s'.\n", outputFile);
+        printf("Error: Unable to write to file `%s'.\n", outputFile);
         fclose(file);
         exit(1);
     }
@@ -300,14 +301,14 @@ int main (int argc, char **argv)
     res = fwrite(prices, sizeof(fptype), numOptions, file);
 
     if(res != numOptions) {
-        printf("ERROR: Unable to write to file `%s'.\n", outputFile);
+        printf("Error: Unable to write to file `%s'.\n", outputFile);
         fclose(file);
         exit(1);
     }
     
     rv = fclose(file);
     if(rv != 0) {
-        printf("ERROR: Unable to close file `%s'.\n", outputFile);
+        printf("Error: Unable to close file `%s'.\n", outputFile);
         exit(1);
     }
 

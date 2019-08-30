@@ -33,24 +33,24 @@ COMPARE_OBJ = $(COMPARE_SRC:%.c=%.o) $(COMM_SRC:%.c=%.o)
 $(SEQ_OBJ): $(H_FILES)
 
 seq_main.o: seq_main.c $(H_FILES)
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -static -c $*.c
 
 seq_kmeans.o: seq_kmeans.c $(H_FILES)
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -static -c $*.c
 
 wtime.o: wtime.c
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -static -c $*.c
 
 compare.o: compare.c
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -static -c $*.c
 
 seq: seq_main
 seq_main: $(SEQ_OBJ) $(H_FILES)
-	$(CC) $(LDFLAGS) -o $@ $(SEQ_OBJ) $(LIBS)
+	$(CC) $(LDFLAGS) -static -o $@ $(SEQ_OBJ) $(LIBS)
 
 quality: compare
 compare: $(COMPARE_OBJ) $(H_FILES) 
-	$(CC) $(LDFLAGS) -o $@ $(COMPARE_OBJ) $(LIBS)
+	$(CC) $(LDFLAGS) -static -o $@ $(COMPARE_OBJ) $(LIBS)
 
 IMAGE_FILES =   color100.txt   color17695.bin   color17695.nc \
                  edge100.txt    edge17695.bin    edge17695.nc \

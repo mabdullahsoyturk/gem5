@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
         }
     }
 
-    printf("Rel Error is %g AbsError is %g \n", relErr/(double) (2*goldenSize), absErr/(double) (2* goldenSize));
+    printf("%g,%g \n", relErr/(double) (2*goldenSize), absErr/(double) (2* goldenSize));
     fclose(golden);
     fclose(test);
 
