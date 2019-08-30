@@ -128,7 +128,7 @@ class ExperimentManager:
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
-        debug_flags = '-debug-flags=FaultTrace'
+        debug_flags = ''
 
         if args.flags and len(args.flags) > 0:
             all_flags = ','.join(args.flags)
@@ -152,22 +152,6 @@ class ExperimentManager:
             print(str(e))
             sys.exit(str(e))
     
-    def is_internal_error(self):
-        grep_error = 'grep "Error" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
-        error_result = ""
-        error_decoded_result = ""
-        try:
-            error_result = subprocess.Popen(grep_error, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-            error_decoded_result = error_result.decode('utf-8')
-        except Exception as e:
-            print(str(e))
-            print("is_internal_error grep does not work properly")
-
-        if error_decoded_result and len(error_decoded_result) > 0:
-            return True
-        else:
-            return False
-
     def is_crash(self):
         grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
         result = ""
@@ -238,13 +222,8 @@ class ExperimentManager:
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)
-        except subprocess.TimeoutExpired:
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
             return "Crash"
-        except Exception as e:
-            return "InternalError"
-
-        if(self.is_internal_error()):
-            return "InternalError"
 
         if self.is_crash():
             return "Crash"

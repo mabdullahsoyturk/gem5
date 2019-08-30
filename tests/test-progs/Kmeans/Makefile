@@ -17,8 +17,8 @@
 all: seq quality 
 
 CC             = gcc
-LIBS=../../lib/m5op_x86.o ../../lib/m5_mmap.o
-INCFLAGS    = -I. -I../../include/
+LIBS=../../../../src/lib/m5op_x86.o ../../../../src/lib/m5_mmap.o
+INCFLAGS    = -I. -I../../../../src/include/
 OPTFLAGS    = -O3 
 CFLAGS      = --static $(OPTFLAGS) $(DFLAGS) $(INCFLAGS) -DFI
 H_FILES     = kmeans.h

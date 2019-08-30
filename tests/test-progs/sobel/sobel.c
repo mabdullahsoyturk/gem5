@@ -119,14 +119,11 @@ int main(int argc, char* argv[])
   fclose(f_in);
 
   sobel(input, output );
-<<<<<<< HEAD
 
 #ifdef FI
    fi_activate(0,STOP);
 #endif
 
-=======
->>>>>>> 64111c29b56bc73a52b034a8c14ba4f3cbdc54f5
   size = fwrite(output, sizeof(unsigned char), SIZE * SIZE, f_out);
   if ( size != SIZE * SIZE ){
       printf("Error:Could not write entire file ... exit\n");
