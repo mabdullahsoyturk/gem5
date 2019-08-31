@@ -88,7 +88,7 @@ class ExperimentManager:
             blackscholes_output = ""
 
             if(is_golden):
-                blackscholes_output = "--blackscholes-output=" + args.blackscholes_output
+                blackscholes_output = "--blackscholes-output=" + BENCH_GOLDEN[args.bench_name]
             else:
                 blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR["blackscholes"] + "/outputs/" + voltage + "/" + input_name
 
@@ -102,7 +102,7 @@ class ExperimentManager:
             jacobi_output = ""
 
             if(is_golden):
-                jacobi_output = "--jacobi-output=" + args.jacobi_output
+                jacobi_output = "--jacobi-output=" + BENCH_GOLDEN[args.bench_name]
             else:
                 jacobi_output = "--jacobi-output=" + BENCH_BIN_DIR["jacobi"] + "/outputs/" + voltage + "/" + input_name
 
@@ -123,7 +123,7 @@ class ExperimentManager:
             monte_tasks = "--monte-tasks=" + args.monte_tasks
             monte_output = ""
             if(is_golden):
-                monte_output = "--monte-output=" + args.monte_output
+                monte_output = "--monte-output=" + BENCH_GOLDEN[args.bench_name]
             else:
                 monte_output = "--monte-output=" + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
 
@@ -133,8 +133,7 @@ class ExperimentManager:
             sobel_input = "--sobel-input=" + args.sobel_input
             sobel_output = ""
             if(is_golden):
-                sobel_output = "--sobel-output=" + args.sobel_output
-                print ("Sobel Output is ",sobel_output)
+                sobel_output = "--sobel-output=" + BENCH_GOLDEN[args.bench_name]
             else:
                 sobel_output = "--sobel-output=" + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name     
 
@@ -308,7 +307,7 @@ def write_results(input_name, args, voltage, result):
             psnr = "0.0"
 
             if(result != "Crash" and result != "InternalError"):
-                psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_BIN_DIR["sobel"] + "/figs/golden.grey"
+                psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
                 psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 psnr = psnr_string.split(":")[1].strip()
 
