@@ -1,10 +1,11 @@
 import os
 import m5
+from os.path import dirname as up
 from m5.objects import *
 from caches import *
 from optparse import OptionParser
 
-BENCH_BIN_HOME = '/home/koparasy/Developing/papers/date/FaultModel/gem5/tests/test-progs'
+BENCH_BIN_HOME = up(up(up(__file__))) + '/tests/test-progs'
 
 input_file = "/home/muhammet/Downloads/gem5/inputs/golden.txt"
 
