@@ -63,17 +63,17 @@ system.cpu = AtomicSimpleCPU()
 
 system.membus = SystemXBar()
 
-system.cpu.icache = L1ICache(opts)
 system.cpu.dcache = L1DCache(opts)
+system.cpu.icache = L1ICache(opts)
 
-system.cpu.icache.fault_injector = FaultInjector(input_path=opts.input_path)
 system.cpu.dcache.fault_injector = FaultInjector(input_path=opts.input_path)
+system.cpu.icache.fault_injector = FaultInjector(input_path=opts.input_path)
 
-system.cpu.icache.connectCPU(system.cpu)
 system.cpu.dcache.connectCPU(system.cpu)
+system.cpu.icache.connectCPU(system.cpu)
 
-system.cpu.icache.connectBus(system.membus)
 system.cpu.dcache.connectBus(system.membus)
+system.cpu.icache.connectBus(system.membus)
 
 system.cpu.createInterruptController()
 

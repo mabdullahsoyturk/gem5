@@ -57,9 +57,6 @@ def makeDirectories(bench_name):
         if ( os.path.exists(BENCH_BIN_DIR[bench_name]+"/outputs/" + v ) == False):
             os.mkdir(BENCH_BIN_DIR[bench_name]+"/outputs/" + v)
 
-
-
-
 def compileBench(bench_name):
     if bench_name not in BENCH_BIN_DIR:
         print ( "Directory is not indexed" )
@@ -211,7 +208,7 @@ class ExperimentManager:
             return True
 
     def is_correct(self):
-        if(self.args.bench_name == "blackscholes" or self.args.bench_name == "jacobi" or self.args.bench_name == "monteCarlo" or self.args.bench_name == "matrix_mul"):
+        if(self.args.bench_name != "Kmeans"):
             golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
             output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
@@ -225,19 +222,6 @@ class ExperimentManager:
                 sys.exit(str(e))
         elif(self.args.bench_name == "Kmeans"):
             pass
-        elif(self.args.bench_name == "sobel"):
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/figs/golden.grey"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
-
-            try:
-                if(filecmp.cmp(output_path, golden_path, shallow=False)):
-                    print (output_path,golden_path)
-                    return True
-                else:
-                    return False
-            except Exception as e:
-                print(str(e))
-                sys.exit(str(e))
 
     def inject(self):
         redirection = '-re'
@@ -283,7 +267,7 @@ def write_results(input_name, args, voltage, result):
             RE = "1.0"
             ABSE = "1.0"
 
-            if(result != "Crash" and result != "InternalError"):
+            if(result != "Crash"):
                 output_name = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
                 error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + output_name + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
                 error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -298,7 +282,7 @@ def write_results(input_name, args, voltage, result):
             MSE = "1.0"
             RE = "1.0"
 
-            if(result != "Crash" and result != "InternalError"):
+            if(result != "Crash"):
                 calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + args.monte_output + " " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
                 calc_errors_string = ''
                 try:
@@ -317,7 +301,7 @@ def write_results(input_name, args, voltage, result):
         elif(args.bench_name == "sobel"):
             psnr = "0.0"
 
-            if(result != "Crash" and result != "InternalError"):
+            if(result != "Crash"):
                 psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
                 psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 psnr = psnr_string.split(":")[1].strip()

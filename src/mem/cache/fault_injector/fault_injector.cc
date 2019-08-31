@@ -11,13 +11,16 @@ FaultInjector *gFIptr;
 FaultInjector::FaultInjector(FaultInjectorParams *params) :
     SimObject(params),inputPath(params->input_path),enabled(false)
 {
-    gFIptr = this;
 }
 
 
 void 
 FaultInjector::init(std::string owner) 
 {
+    if(owner == "l1d"){
+        gFIptr = this;
+    }
+
     std::ifstream ifs(inputPath);
     
     int set,byteOffset,bitOffset;
@@ -66,6 +69,7 @@ FaultInjector::injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::
     if (!enabled) {
         return;
     }
+    DPRINTF(FaultTrace, "injectFaults method worked\n");
     for (std::vector<CacheFault>::iterator it = faults.begin();
                                         it != faults.end(); ++it) {
         CacheBlk* blk = static_cast<CacheBlk*>
