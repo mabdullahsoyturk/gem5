@@ -121,8 +121,14 @@ class ExperimentManager:
             kmeans_b = "--kmeans-b" if args.kmeans_b else ""
             kmeans_n = "--kmeans-n=" + args.kmeans_n
             kmeans_i = "--kmeans-i=" + args.kmeans_i
+            kmeans_output = ""
 
-            kmeans_options = ' '.join([kmeans_o, kmeans_b, kmeans_n, kmeans_i])
+            if(is_golden):
+                kmeans_output = "--kmeans-output=" + BENCH_GOLDEN[args.bench_name]
+            else:
+                kmeans_output = "--kmeans-output=" + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name
+
+            kmeans_options = ' '.join([kmeans_o, kmeans_b, kmeans_n, kmeans_i, kmeans_output])
             bench_binary_options = kmeans_options
         elif(args.bench_name == "monteCarlo"):
             monte_x = "--monte-x=" + args.monte_x
@@ -221,7 +227,17 @@ class ExperimentManager:
                 print(str(e))
                 sys.exit(str(e))
         elif(self.args.bench_name == "Kmeans"):
-            pass
+            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin.membership"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name + ".membership"
+
+            try:
+                if(filecmp.cmp(output_path, golden_path, shallow=False)):
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                print(str(e))
+                sys.exit(str(e))
 
     def inject(self):
         redirection = '-re'
@@ -277,7 +293,25 @@ def write_results(input_name, args, voltage, result):
 
             line = ",".join([input_name[:-4], result, RE, ABSE + "\n"])
         elif(args.bench_name == "Kmeans"):
-            pass
+            cluster_relative_error = ""
+            cluster_absolute_error = ""
+            correct_membership_percentage = ""
+
+            if(result != "Crash"):
+                compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name
+                compare_string = ''
+                try:
+                    compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                except Exception as e:
+                    print("Exception while writing results")
+                    print(str(e))
+                output = compare_string.split(",")
+                cluster_relative_error = output[0].strip()
+                cluster_absolute_error = output[1].strip()
+                correct_membership_percentage = output[2].strip()
+
+            line = ",".join([input_name[:-4], result, cluster_relative_error, cluster_absolute_error, correct_membership_percentage + "\n"])
+
         elif(args.bench_name == "monteCarlo"):
             MSE = "1.0"
             RE = "1.0"
@@ -342,6 +376,7 @@ if __name__ == '__main__':
     parser.add_argument("--kmeans-b", action="store_true", help="input file is in binary format")
     parser.add_argument("--kmeans-n", help="number of clusters")
     parser.add_argument("--kmeans-i", help="file containing data to be clustered")
+    parser.add_argument("--kmeans-output", help="Output file", default="")
 
     # Options for monte carlo application : example run: ./monte_carlo  5 5 50 5 out.bin
     parser.add_argument("--monte-x", help="Size of X", default="")

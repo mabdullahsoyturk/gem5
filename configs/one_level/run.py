@@ -32,6 +32,7 @@ parser.add_option("--kmeans-o", action="store_true", help="output timing results
 parser.add_option("--kmeans-b", action="store_true", help="input file is in binary format")
 parser.add_option("--kmeans-n", help="number of clusters")
 parser.add_option("--kmeans-i", help="file containing data to be clustered")
+parser.add_option("--kmeans-output", help="Output file")
 
 # Options for monte carlo application : example run: ./monte_carlo  5 5 50 5 out.bin
 parser.add_option("--monte-x", help="Size of X", default="")
@@ -99,7 +100,7 @@ if(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/blackscholes/blackschol
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/jacobi/jacobi')):
     process.cmd = [opts.bench_path] + [opts.jacobi_n, opts.jacobi_itol, opts.jacobi_dominant, opts.jacobi_maxiters, opts.jacobi_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/Kmeans/seq_main')):
-    process.cmd = [opts.bench_path] + ["-o" if opts.kmeans_o else "", "-b" if opts.kmeans_b else "", opts.kmeans_i, opts.kmeans_n]
+    process.cmd = [opts.bench_path] + ["-o", "-b" if opts.kmeans_b else "", "-i", opts.kmeans_i, "-n", opts.kmeans_n, "-w", opts.kmeans_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/monteCarlo/monte_carlo')):
     process.cmd = [opts.bench_path] + [opts.monte_x, opts.monte_y, opts.monte_walks, opts.monte_tasks, opts.monte_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/sobel/sobel')):
