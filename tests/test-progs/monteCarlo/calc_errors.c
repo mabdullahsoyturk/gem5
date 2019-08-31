@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
     }
     err  /= (double)num1;
     err2 /=tot;
-    //	printf("MSE=%G\nRelativeError=%G\nTimeExact=%f\nTimeApprox=%g\nSpeedup=%g\n", err, err2, (double)(dur1)/1000000.0, (double)dur2/1000000.0, (float)dur1/dur2);
+    //	printf("MSE=%G\nRelativeError=%G\nTimeExact=%f\nTimeApprox=%g\nSpeedup=%g\n", err, err2, (double)(dur1)/1000000.0, (double)dur2/1000000.0, (double)dur1/dur2);
     //  printf("NZ1=%ld out of %ld\nNZ2=%ld\n", nz1, num1, nz2);
     printf("%G,%G", err, err2); 
     fclose(f1);

@@ -4,6 +4,9 @@
 #include <math.h>
 #include <sys/time.h>
 
+#ifdef FI 
+#include <m5ops.h>
+#endif
 
 
 double *construct_jacobi_matrix(int diagonally_dominant, int size);
@@ -145,7 +148,6 @@ int main(int argc, char* argv[]) {
     int diagonally_dominant;
     unsigned int iters;
     double diff;
-    int i;
     long  _seed;
     FILE* output;
 
@@ -196,18 +198,28 @@ int main(int argc, char* argv[]) {
     mat = construct_jacobi_matrix(diagonally_dominant, N);
     b = construct_right(N, mat, y);
 
+#ifdef FI
+   fi_activate(0,START);
+#endif
+
     diff = jacobi(mat, x, x1, b, y, N, itol, &iters);
+
+#ifdef FI
+   fi_activate(0,STOP);
+#endif
 
     printf("Converged after %d iterations, solution: %g\n", iters,diff);
 
-
+    printf("I am going to output to %s\n", argv[5]);
     output = fopen(argv[5] , "wb");
-    fwrite(&N, sizeof(long), 1, output);
-    for ( i=0; i<N; ++i )
-    {
-        fwrite(x+i, sizeof(double), 1, output);
-        fwrite(y+i, sizeof(double), 1, output);
+    if ( output == NULL){
+        printf("This should not happen \n");
+        exit(-1);
     }
+        
+    fwrite(&N, sizeof(long), 1, output);
+    fwrite(x, sizeof(double), N, output);
+    fwrite(y, sizeof(double), N, output);
 
     fclose(output);
     free(x1);

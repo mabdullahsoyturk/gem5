@@ -4,9 +4,28 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include "myMath.h"
+
+
+
+
+double lfsr113_Bits (void)
+{
+   static unsigned int z1 = 12345, z2 = 12345, z3 = 12345, z4 = 12345;
+   unsigned int b;
+   b  = ((z1 << 6) ^ z1) >> 13;
+   z1 = ((z1 & 4294967294U) << 18) ^ b;
+   b  = ((z2 << 2) ^ z2) >> 27; 
+   z2 = ((z2 & 4294967288U) << 2) ^ b;
+   b  = ((z3 << 13) ^ z3) >> 21;
+   z3 = ((z3 & 4294967280U) << 7) ^ b;
+   b  = ((z4 << 3) ^ z4) >> 12;
+   z4 = ((z4 & 4294967168U) << 13) ^ b;
+   return (double) (z1 ^ z2 ^ z3 ^ z4);
+}
 
 double rand_uniform() {
-	double r = rand()/(double)RAND_MAX;
+	double r = lfsr113_Bits()/(double)RAND_MAX;
 	return r;
 }
 
@@ -15,15 +34,15 @@ void update_y_2D(double x[], double y[], double d)
 	double angle = rand_uniform()*(2.*M_PI);
 	double rad;
 	do {rad = rand_uniform()*d;} while (((4.*rad)/(d*d))*log(d/rad) < rand_uniform()*(4./(M_E*d)));
-	y[0] = x[0] + rad*cos(angle);
-	y[1] = x[1] + rad*sin(angle);
+	y[0] = x[0] + rad*myCos(angle);
+	y[1] = x[1] + rad*mySin(angle);
 }
 
 void update_x_2D(double x[], double d)
 {
 	double angle = rand_uniform()*(2.*M_PI);
-	x[0] += d*cos(angle);
-	x[1] += d*sin(angle);
+	x[0] += d*myCos(angle);
+	x[1] += d*mySin(angle);
 }
 
 double estimate_point_2D(double x[])
@@ -204,6 +223,7 @@ int main(int argc, char* argv[])
 	{
 		random_walks_from_point(D, points+2*i, estimation+i, walks, btol, tasks);
 	}
+
 	dur = my_time() - dur;
 	printf("Duration: %ld\n", dur);
 	fwrite(&nodes, sizeof(long), 1, out);

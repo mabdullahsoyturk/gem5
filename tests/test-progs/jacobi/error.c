@@ -3,7 +3,9 @@
 #include <math.h>
 
 double relerror(double golden, double test){
-    return fabs( (fabs(golden) - fabs(test))/golden);
+    if ( golden != 0.0 )
+        return fabs( (fabs(golden) - fabs(test))/golden);
+    return 0.0;       
 }
 
 double abserror(double golden, double test){
