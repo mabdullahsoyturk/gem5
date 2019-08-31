@@ -212,7 +212,7 @@ class ExperimentManager:
 
     def is_correct(self):
         if(self.args.bench_name == "blackscholes" or self.args.bench_name == "jacobi" or self.args.bench_name == "monteCarlo" or self.args.bench_name == "matrix_mul"):
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/output.txt"
+            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
             output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
             try:
