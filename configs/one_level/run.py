@@ -5,9 +5,11 @@ from m5.objects import *
 from caches import *
 from optparse import OptionParser
 
-BENCH_BIN_HOME = up(up(up(__file__))) + '/tests/test-progs'
+GEM5_PATH = up(up(up(__file__)))
 
-input_file = "/home/muhammet/Downloads/gem5/inputs/golden.txt"
+BENCH_BIN_HOME = GEM5_PATH + '/tests/test-progs'
+
+input_file = GEM5_PATH + "inputs/golden.txt"
 
 parser = OptionParser()
 
