@@ -49,6 +49,17 @@ BENCH_GOLDEN = {
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
 GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
 
+def makeDirectories(bench_name):
+    if ( os.path.exists(BENCH_BIN_DIR[bench_name]+"/outputs") == False):
+        os.mkdir(BENCH_BIN_DIR[bench_name]+"/outputs")
+
+    for v in voltages:
+        if ( os.path.exists(BENCH_BIN_DIR[bench_name]+"/outputs/" + v ) == False):
+            os.mkdir(BENCH_BIN_DIR[bench_name]+"/outputs/" + v)
+
+
+
+
 def compileBench(bench_name):
     if bench_name not in BENCH_BIN_DIR:
         print ( "Directory is not indexed" )
@@ -367,6 +378,7 @@ if __name__ == '__main__':
     open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
    
     compileBench(args.bench_name)
+    makeDirectories(args.bench_name)
     ExperimentManager.run_golden(args)
 
     for voltage in voltages:
