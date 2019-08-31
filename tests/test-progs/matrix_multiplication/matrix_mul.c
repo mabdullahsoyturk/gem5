@@ -1,7 +1,7 @@
 #include <stdio.h> 
 #include <stdlib.h>
-  
-#define N 64 
+
+#define N 64
 
 void multiply(int matrix1[][N], int matrix2[][N], int result[][N]) 
 { 
@@ -48,10 +48,10 @@ int main(int argc, char **argv)
     for (i = 0; i < N; i++) 
     { 
         for (j = 0; j < N; j++) {
-            fprintf(output_file, "%d ", result[i][j]); 
-        } 
+            fprintf(output_file, "%d ", result[i][j]);
+        }
         fprintf(output_file, "\n");
-    } 
-  
-    return 0; 
+    }
+
+    return 0;
 }

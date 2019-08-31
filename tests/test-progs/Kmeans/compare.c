@@ -66,7 +66,7 @@ int compareMemberShips( char *goldenFilePrefix, char *checkFilePrefix, int numMe
     golden = fopen(fileName, "r");
     if (!golden){
         printf("Could not open %s file \n", fileName);
-	printf("Error");
+        printf("Error");
         exit(-1);
     }
 
@@ -77,7 +77,7 @@ int compareMemberShips( char *goldenFilePrefix, char *checkFilePrefix, int numMe
     test = fopen(fileName, "r");
     if (!test ){
         printf("Could not open %s file \n", fileName);
-	printf("Error");
+        printf("Error");
         exit(-1);
     }
     count = 0;
@@ -87,7 +87,7 @@ int compareMemberShips( char *goldenFilePrefix, char *checkFilePrefix, int numMe
         int items = fscanf(golden,"%d %d\n", &gid, &goldenCluster);
         if ( items != 2 ){
             printf("This should not happen Golden File should always contain correct number of items\n");
-	    printf("Error");
+            printf("Error");
             exit(-1);
         }
         items = fscanf(test,"%d %d\n", &tid, &testCluster);
@@ -119,7 +119,8 @@ int main(int argc, char *argv[]){
 
     compareClusterCenters(goldenFilePrefix, checkFilePrefix, &clusterRelError, &clusterAbsError);
     correctMembers = compareMemberShips(goldenFilePrefix, checkFilePrefix, numMembers);
-    printf("%g,%g,%g\n", clusterRelError, clusterAbsError, ((double)correctMembers/(double)numMembers));
+    printf("%g,%g,%g\n", clusterRelError, clusterAbsError,
+                ((double)correctMembers/(double)numMembers));
 
 
     

@@ -4,7 +4,7 @@ from m5.objects import *
 from caches import *
 from optparse import OptionParser
 
-BENCH_BIN_HOME = '/home/muhammet/Downloads/gem5/tests/test-progs'
+BENCH_BIN_HOME = '/home/koparasy/Developing/papers/date/FaultModel/gem5/tests/test-progs'
 
 input_file = "/home/muhammet/Downloads/gem5/inputs/golden.txt"
 
@@ -41,7 +41,8 @@ parser.add_option("--monte-output", help="Output file", default="")
 parser.add_option("--sobel-input", help="Input file", default="")
 parser.add_option("--sobel-output", help="Output file", default="")
 
-# Options for matrix multiplication application : example run: ./matrix_mul 'output file'
+# Options for matrix multiplication application :
+#example run: ./matrix_mul 'output file'
 parser.add_option("--matrix-output", help="Output file", default="output.txt")
 
 (opts, args) = parser.parse_args()

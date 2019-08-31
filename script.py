@@ -36,6 +36,16 @@ BENCH_BINARY = {
     'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/sobel')
 }
 
+BENCH_GOLDEN = {
+    'matrix_mul' : os.path.abspath(BENCH_BIN_DIR["matrix_mul"] + '/golden.bin'),
+    'blackscholes': os.path.abspath(BENCH_BIN_DIR["blackscholes"] + '/golden.bin'),
+    'jacobi' : os.path.abspath(BENCH_BIN_DIR["jacobi"] + '/golden.bin'),
+    'Kmeans' : os.path.abspath(BENCH_BIN_DIR["Kmeans"] + '/golden.bin'),
+    'monteCarlo' : os.path.abspath(BENCH_BIN_DIR["monteCarlo"] + '/golden.bin'),
+    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/golden.bin')
+}
+
+
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
 GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
 
@@ -104,6 +114,7 @@ class ExperimentManager:
             sobel_output = ""
             if(is_golden):
                 sobel_output = "--sobel-output=" + args.sobel_output
+                print ("Sobel Output is ",sobel_output)
             else:
                 sobel_output = "--sobel-output=" + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name     
 
@@ -115,7 +126,7 @@ class ExperimentManager:
                 matrix_output = "--matrix-output=" + args.matrix_output
             else:
                 matrix_output = "--matrix-output=" + BENCH_BIN_DIR["matrix_mul"] + "/outputs/" + voltage + "/" + input_name
-            
+
             matrix_options = ' '.join([matrix_output])
             bench_binary_options = matrix_options
 
@@ -152,6 +163,7 @@ class ExperimentManager:
             print(str(e))
             sys.exit(str(e))
     
+
     def is_crash(self):
         grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
         result = ""
@@ -189,6 +201,7 @@ class ExperimentManager:
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
+                    print (output_path,golden_path)
                     return True
                 else:
                     return False

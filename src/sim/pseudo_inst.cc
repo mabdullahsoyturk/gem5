@@ -201,7 +201,10 @@ pseudoInst(ThreadContext *tc, uint8_t func, uint8_t subfunc)
 
       case M5OP_ANNOTATE:
       case M5OP_RESERVED2:
-      case M5OP_RESERVED3:
+          break;
+      case FI_ACTIVATE_INST:
+          fi_activate(tc, args[0],args[1]);
+          break;
       case M5OP_RESERVED4:
       case M5OP_RESERVED5:
         warn("Unimplemented m5 op (0x%x)\n", func);
@@ -731,6 +734,7 @@ fi_activate(ThreadContext *tc, uint64_t threadid, uint64_t req){
             DPRINTF(FaultTrace, "This Request does not exist I ignore it\n");
             break;
     }
+    return;
 }
 
 } // namespace PseudoInst
