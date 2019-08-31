@@ -49,6 +49,26 @@ BENCH_GOLDEN = {
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
 GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
 
+def compileBench(bench_name):
+    if bench_name not in BENCH_BIN_DIR:
+        print ( "Directory is not indexed" )
+        sys.exit(-1)
+    os.chdir(BENCH_BIN_DIR[bench_name])        
+
+    try:    
+        subprocess.check_call(["make clean"], shell=True)
+    except Exception as e:
+        print(str(e))
+        sys.exit(str(e))
+
+    try:    
+        subprocess.check_call(["make CFLAGS=-DFI"], shell=True)
+    except Exception as e:
+        print(str(e))
+        sys.exit(str(e))
+    os.chdir(WHERE_AM_I) 
+
+
 class ExperimentManager:
     ##
     #  example gem5 run:
@@ -346,7 +366,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
-    
+   
+    compileBench(args.bench_name)
     ExperimentManager.run_golden(args)
 
     for voltage in voltages:
