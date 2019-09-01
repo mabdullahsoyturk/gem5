@@ -1,20 +1,15 @@
 import os
 import sys
 import glob
-import concurrent.futures 
-from functools import partial
-import argparse
 import subprocess
+from functools import partial
 import filecmp
 import helpers
 
-#voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
-voltages = helpers.voltages
-
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
-BENCH_INPUT_HOME = helpers.BENCH_INPUT_HOME
-BENCH_BIN_HOME = helpers.BENCH_BIN_HOME
+BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
+BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
 BENCH_BIN_DIR = helpers.BENCH_BIN_DIR
 BENCH_BINARY = helpers.BENCH_BINARY
 BENCH_GOLDEN = helpers.BENCH_GOLDEN
@@ -27,9 +22,8 @@ class ExperimentManager:
     #  example gem5 run:
     #    <gem5 bin> <gem5 options> <gem5 script> <gem5 script options>
     ##
-    def __init__(self, args, input_name, voltage):
+    def __init__(self, args, input_name):
         self.args = args
-        self.voltage = voltage
         self.input_name = input_name
 
     @staticmethod
@@ -49,7 +43,7 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[args.bench_name]
 
-        bench_binary_options = helpers.get_binary_options(args, is_golden = True)
+        bench_binary_options = helpers.get_binary_options(args, is_golden = True, is_random = True)
 
         input_path = '--input-path=' + BENCH_INPUT_HOME + "golden.txt"
 
@@ -65,7 +59,7 @@ class ExperimentManager:
     
 
     def is_crash(self):
-        grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
+        grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.input_name + "/output.txt"
         result = ""
         decoded_result = ""
 
@@ -83,7 +77,7 @@ class ExperimentManager:
     def is_correct(self):
         if(self.args.bench_name != "Kmeans"):
             golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.input_name
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
@@ -95,7 +89,7 @@ class ExperimentManager:
                 sys.exit(str(e))
         elif(self.args.bench_name == "Kmeans"):
             golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin.membership"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name + ".membership"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.input_name + ".membership"
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
@@ -108,7 +102,7 @@ class ExperimentManager:
 
     def inject(self):
         redirection = '-re'
-        outdir = '--outdir=' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name
+        outdir = '--outdir=' + self.args.bench_name + '_results/faulty/' + self.input_name
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
@@ -122,9 +116,9 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[self.args.bench_name]
 
-        bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
+        bench_binary_options = helpers.get_binary_options(self.args, False, self.input_name, is_random=True)
 
-        input_path = '--input-path ' + BENCH_INPUT_HOME + voltage + "/" + self.input_name
+        input_path = '--input-path ' + BENCH_INPUT_HOME + "random/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
@@ -143,14 +137,6 @@ class ExperimentManager:
         else:
             return "Incorrect"
 
-def run_experiment(input_path, args, voltage):
-    input_name = input_path.split("/")[-1]
-    experiment_manager = ExperimentManager(args, input_name, voltage)
-
-    result = experiment_manager.inject()
-    print("Voltage: " + voltage + ", Fault input: " + input_name + ", Result: " + result)
-
-    helpers.write_deterministic_results(input_name, args, voltage, result)
 
 if __name__ == '__main__':
     args = helpers.get_arguments()
@@ -159,13 +145,4 @@ if __name__ == '__main__':
    
     helpers.compileBench(args.bench_name)      # Compile benchmarks
     helpers.removeDirectories(args.bench_name) # Remove the results of previous experiments
-    helpers.makeDirectories(args.bench_name, True)   # Make new directories for these experiments
-    ExperimentManager.run_golden(args)
-
-    for voltage in voltages:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            input_paths = glob.glob(WHERE_AM_I + "/inputs/" + voltage + "/BRAM_*.txt")
-
-            method_with_params = partial(run_experiment, args=args, voltage=voltage)
-
-            executor.map(method_with_params, input_paths)
+    helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
