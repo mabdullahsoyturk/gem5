@@ -1,15 +1,19 @@
 import argparse
 import os
+import glob
 from shutil import rmtree
 import sys
 import subprocess
+import random
+import concurrent.futures
 
-#voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
-voltages = ["0.59V"]
+voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
+#voltages = ["0.59V"]
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
 BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
+RANDOM_PATH = BENCH_INPUT_HOME + "random"
 
 BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
 
@@ -44,10 +48,16 @@ def makeDirectories(bench_name, is_deterministic):
     if (os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs") == False):
         os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs")
 
-    if(is_deterministic):
+    for v in voltages:
+        if (os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs/" + v ) == False):
+            os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs/" + v)
+    
+    if(not is_deterministic and os.path.exists(BENCH_INPUT_HOME + "random") == False):
+        os.mkdir(BENCH_INPUT_HOME + "random")
+
         for v in voltages:
-            if ( os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs/" + v ) == False):
-                os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs/" + v)
+            if (os.path.exists(BENCH_INPUT_HOME + "random/" + v ) == False):
+                os.mkdir(BENCH_INPUT_HOME + "random/" + v)
 
 def removeDirectories(bench_name):
     if (os.path.exists(WHERE_AM_I + '/' + bench_name + '_results')):
@@ -55,6 +65,9 @@ def removeDirectories(bench_name):
 
     if(os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs")):
         rmtree(BENCH_BIN_DIR[bench_name] + "/outputs")
+
+    if(os.path.exists(BENCH_INPUT_HOME + "random")):
+        rmtree(BENCH_INPUT_HOME + "random")
 
 def compileBench(bench_name):
     if bench_name not in BENCH_BIN_DIR:
@@ -74,6 +87,44 @@ def compileBench(bench_name):
         print(str(e))
         sys.exit(str(e))
     os.chdir(WHERE_AM_I) 
+
+def getNumberOfErrors(input_path, voltage):
+    grep_number_of_lines = 'grep ' + '"[0-9]" -c ' + input_path
+    
+    result = ""
+
+    try:
+        result = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode('utf-8')
+    except Exception as e:
+        print(e)
+
+    return int(result)
+
+def createRandomInput(input_path, voltage, number_of_errors):
+    input_name = input_path.split("/")[-1]
+
+    with open(RANDOM_PATH + "/" + voltage + "/" + input_name, "w") as input_file:
+        for i in range(number_of_errors):
+            fault_set = random.randint(0,32)
+            fault_byte_offset = random.randint(0,64)
+            fault_bit_offset = random.randint(0,8)
+            fault_cache_type = "l1d"
+
+            line = ' '.join([str(fault_set), str(fault_byte_offset), str(fault_bit_offset), fault_cache_type + "\n"])
+
+            input_file.write(line)
+
+def createRandomInputs():
+    for voltage in voltages:
+        input_paths = glob.glob(BENCH_INPUT_HOME + voltage + "/BRAM_*.txt")
+
+        for input_path in input_paths:
+            number_of_errors = getNumberOfErrors(input_path, voltage)
+            createRandomInput(input_path, voltage, number_of_errors)
+
+            
+    number_of_errors = getNumberOfErrors(input_path, voltage)
+    createRandomInput(input_path, voltage, number_of_errors)
 
 def get_arguments():
     parser = argparse.ArgumentParser()

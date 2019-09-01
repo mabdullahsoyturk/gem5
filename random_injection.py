@@ -146,3 +146,5 @@ if __name__ == '__main__':
     helpers.compileBench(args.bench_name)      # Compile benchmarks
     helpers.removeDirectories(args.bench_name) # Remove the results of previous experiments
     helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
+
+    helpers.createRandomInputs()
