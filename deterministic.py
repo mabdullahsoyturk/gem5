@@ -4,10 +4,10 @@ import glob
 import concurrent.futures 
 from functools import partial
 import random
-import re
 import argparse
 import subprocess
 import filecmp
+from shutil import rmtree
 
 #voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
 voltages = ["0.59V"]
@@ -50,12 +50,19 @@ GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
 GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
 
 def makeDirectories(bench_name):
-    if ( os.path.exists(BENCH_BIN_DIR[bench_name]+"/outputs") == False):
-        os.mkdir(BENCH_BIN_DIR[bench_name]+"/outputs")
+    if (os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs") == False):
+        os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs")
 
     for v in voltages:
-        if ( os.path.exists(BENCH_BIN_DIR[bench_name]+"/outputs/" + v ) == False):
-            os.mkdir(BENCH_BIN_DIR[bench_name]+"/outputs/" + v)
+        if ( os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs/" + v ) == False):
+            os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs/" + v)
+
+def removeDirectories(bench_name):
+    if (os.path.exists(WHERE_AM_I + '/' + bench_name + '_results')):
+        rmtree(WHERE_AM_I + '/' + bench_name + '_results')
+
+    if(os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs")):
+        rmtree(BENCH_BIN_DIR[bench_name] + "/outputs")
 
 def compileBench(bench_name):
     if bench_name not in BENCH_BIN_DIR:
@@ -396,8 +403,9 @@ if __name__ == '__main__':
     
     open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
    
-    compileBench(args.bench_name)
-    makeDirectories(args.bench_name)
+    compileBench(args.bench_name)      # Compile benchmarks
+    removeDirectories(args.bench_name) # Remove the results of previous experiments
+    makeDirectories(args.bench_name)   # Make new directories for these experiments
     ExperimentManager.run_golden(args)
 
     for voltage in voltages:
