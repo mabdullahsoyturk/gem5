@@ -150,7 +150,7 @@ def run_experiment(input_path, args, voltage):
     result = experiment_manager.inject()
     print("Voltage: " + voltage + ", Fault input: " + input_name + ", Result: " + result)
 
-    helpers.write_deterministic_results(input_name, args, voltage, result)
+    helpers.write_results(input_name, args, voltage, result)
 
 if __name__ == '__main__':
     args = helpers.get_arguments()

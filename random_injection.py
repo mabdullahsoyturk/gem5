@@ -3,8 +3,11 @@ import sys
 import glob
 import subprocess
 from functools import partial
+import concurrent.futures 
 import filecmp
 import helpers
+
+voltages = helpers.voltages
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
@@ -22,9 +25,10 @@ class ExperimentManager:
     #  example gem5 run:
     #    <gem5 bin> <gem5 options> <gem5 script> <gem5 script options>
     ##
-    def __init__(self, args, input_name):
+    def __init__(self, args, input_name, voltage):
         self.args = args
         self.input_name = input_name
+        self.voltage = voltage
 
     @staticmethod
     def run_golden(args):
@@ -59,7 +63,7 @@ class ExperimentManager:
     
 
     def is_crash(self):
-        grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.input_name + "/output.txt"
+        grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
         result = ""
         decoded_result = ""
 
@@ -77,7 +81,7 @@ class ExperimentManager:
     def is_correct(self):
         if(self.args.bench_name != "Kmeans"):
             golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.input_name
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
@@ -89,7 +93,7 @@ class ExperimentManager:
                 sys.exit(str(e))
         elif(self.args.bench_name == "Kmeans"):
             golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin.membership"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.input_name + ".membership"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name + ".membership"
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
@@ -102,7 +106,7 @@ class ExperimentManager:
 
     def inject(self):
         redirection = '-re'
-        outdir = '--outdir=' + self.args.bench_name + '_results/faulty/' + self.input_name
+        outdir = '--outdir=' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
@@ -116,9 +120,9 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[self.args.bench_name]
 
-        bench_binary_options = helpers.get_binary_options(self.args, False, self.input_name, is_random=True)
+        bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
 
-        input_path = '--input-path ' + BENCH_INPUT_HOME + "random/" + self.input_name
+        input_path = '--input-path ' + BENCH_INPUT_HOME + "random/" + self.voltage + "/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
@@ -137,6 +141,14 @@ class ExperimentManager:
         else:
             return "Incorrect"
 
+def run_experiment(input_path, args, voltage):
+    input_name = input_path.split("/")[-1]
+    experiment_manager = ExperimentManager(args, input_name, voltage)
+
+    result = experiment_manager.inject()
+    print("Voltage: " + voltage + ", Fault input: " + input_name + ", Result: " + result)
+
+    helpers.write_results(input_name, args, voltage, result)
 
 if __name__ == '__main__':
     args = helpers.get_arguments()
@@ -148,3 +160,11 @@ if __name__ == '__main__':
     helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
 
     helpers.createRandomInputs()
+
+    for voltage in voltages:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            input_paths = glob.glob(WHERE_AM_I + "/inputs/random/" + voltage + "/BRAM_*.txt")
+
+            method_with_params = partial(run_experiment, args=args, voltage=voltage)
+
+            executor.map(method_with_params, input_paths)

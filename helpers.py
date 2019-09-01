@@ -165,7 +165,7 @@ def get_arguments():
 
     return parser.parse_args()
 
-def get_binary_options(args, voltage="", is_golden = False, input_name="", is_random=False):
+def get_binary_options(args, voltage="", is_golden = False, input_name=""):
         bench_binary_options = ''
 
         if(args.bench_name == "blackscholes"):
@@ -175,8 +175,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 blackscholes_output = "--blackscholes-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                suffix = input_name if is_random else voltage + "/" + input_name
-                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR["blackscholes"] + "/outputs/" + suffix
+                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR["blackscholes"] + "/outputs/" + voltage + "/" + input_name
 
             blackscholes_options = ' '.join([blackscholes_input, blackscholes_output])
             bench_binary_options = blackscholes_options
@@ -190,8 +189,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 jacobi_output = "--jacobi-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                suffix = input_name if is_random else voltage + "/" + input_name
-                jacobi_output = "--jacobi-output=" + BENCH_BIN_DIR["jacobi"] + "/outputs/" + suffix
+                jacobi_output = "--jacobi-output=" + BENCH_BIN_DIR["jacobi"] + "/outputs/" + voltage + "/" + input_name
 
             jacobi_options = ' '.join([jacobi_n, jacobi_itol, jacobi_dominant, jacobi_maxiters, jacobi_output])
             bench_binary_options = jacobi_options
@@ -205,8 +203,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 kmeans_output = "--kmeans-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                suffix = input_name if is_random else voltage + "/" + input_name
-                kmeans_output = "--kmeans-output=" + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + suffix
+                kmeans_output = "--kmeans-output=" + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name
 
             kmeans_options = ' '.join([kmeans_o, kmeans_b, kmeans_n, kmeans_i, kmeans_output])
             bench_binary_options = kmeans_options
@@ -219,8 +216,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 monte_output = "--monte-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                suffix = input_name if is_random else voltage + "/" + input_name
-                monte_output = "--monte-output=" + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + suffix
+                monte_output = "--monte-output=" + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
 
             monte_options = ' '.join([monte_x, monte_y, monte_walks, monte_tasks, monte_output])
             bench_binary_options = monte_options
@@ -230,8 +226,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 sobel_output = "--sobel-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                suffix = input_name if is_random else voltage + "/" + input_name
-                sobel_output = "--sobel-output=" + BENCH_BIN_DIR["sobel"] + "/outputs/" + suffix     
+                sobel_output = "--sobel-output=" + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name     
 
             sobel_options = ' '.join([sobel_input, sobel_output])
             bench_binary_options = sobel_options
@@ -240,15 +235,14 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 matrix_output = "--matrix-output=" + args.matrix_output
             else:
-                suffix = input_name if is_random else voltage + "/" + input_name
-                matrix_output = "--matrix-output=" + BENCH_BIN_DIR["matrix_mul"] + "/outputs/" + suffix
+                matrix_output = "--matrix-output=" + BENCH_BIN_DIR["matrix_mul"] + "/outputs/" + voltage + "/" + input_name
 
             matrix_options = ' '.join([matrix_output])
             bench_binary_options = matrix_options
 
         return bench_binary_options
 
-def write_deterministic_results(input_name, args, voltage, result):
+def write_results(input_name, args, voltage, result):
 
     with open(WHERE_AM_I + "/" + args.bench_name + "_results" + "/" + voltage + "_results.txt", "a") as result_file:
         if(args.bench_name == "blackscholes" or args.bench_name == "jacobi"):
@@ -309,73 +303,6 @@ def write_deterministic_results(input_name, args, voltage, result):
 
             if(result != "Crash"):
                 psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
-                psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
-                psnr = psnr_string.split(":")[1].strip()
-
-            line = ",".join([input_name[:-4], result, psnr + "\n"])
-        elif(args.bench_name == "matrix_mul"):
-            line = ",".join([input_name[:-4], result + "\n"])
-
-        result_file.write(line)
-
-def write_random_results(input_name, args, result):
-
-    with open(WHERE_AM_I + "/" + args.bench_name + "_results" + "/results.txt", "a") as result_file:
-        if(args.bench_name == "blackscholes" or args.bench_name == "jacobi"):
-            RE = "1.0"
-            ABSE = "1.0"
-
-            if(result != "Crash"):
-                output_name = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
-                error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + output_name + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + input_name
-                error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
-                output = error_string.split(",")
-                RE = output[0].strip()
-                ABSE = output[1].strip()
-
-            line = ",".join([input_name[:-4], result, RE, ABSE + "\n"])
-        elif(args.bench_name == "Kmeans"):
-            cluster_relative_error = ""
-            cluster_absolute_error = ""
-            correct_membership_percentage = ""
-
-            if(result != "Crash"):
-                compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + input_name
-                compare_string = ''
-                try:
-                    compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
-                except Exception as e:
-                    print("Exception while writing results")
-                    print(str(e))
-                output = compare_string.split(",")
-                cluster_relative_error = output[0].strip()
-                cluster_absolute_error = output[1].strip()
-                correct_membership_percentage = output[2].strip()
-
-            line = ",".join([input_name[:-4], result, cluster_relative_error, cluster_absolute_error, correct_membership_percentage + "\n"])
-
-        elif(args.bench_name == "monteCarlo"):
-            MSE = "1.0"
-            RE = "1.0"
-
-            if(result != "Crash"):
-                calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + args.monte_output + " " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + input_name
-                calc_errors_string = ''
-                try:
-                    calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
-                except Exception as e:
-                    print("Exception while writing results")
-                    print(str(e))
-                output = calc_errors_string.split(",")
-                MSE = output[0].strip()
-                RE = output[1].strip()
-
-            line = ",".join([input_name[:-4], result, MSE, RE + "\n"])
-        elif(args.bench_name == "sobel"):
-            psnr = "0.0"
-
-            if(result != "Crash"):
-                psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
                 psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 psnr = psnr_string.split(":")[1].strip()
 
