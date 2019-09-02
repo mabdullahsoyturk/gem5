@@ -52,22 +52,26 @@ def makeDirectories(bench_name, is_deterministic):
         if (os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs/" + v ) == False):
             os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs/" + v)
     
-    if(not is_deterministic and os.path.exists(BENCH_INPUT_HOME + "random") == False):
-        os.mkdir(BENCH_INPUT_HOME + "random")
+    if(not is_deterministic):
+        if(os.path.exists(RANDOM_PATH) == False):
+            os.mkdir(RANDOM_PATH)
+
+        if (os.path.exists(RANDOM_PATH + "/" + bench_name) == False):
+            os.mkdir(RANDOM_PATH + "/" + bench_name)
 
         for v in voltages:
-            if (os.path.exists(BENCH_INPUT_HOME + "random/" + v ) == False):
-                os.mkdir(BENCH_INPUT_HOME + "random/" + v)
+            if (os.path.exists(RANDOM_PATH + "/" + bench_name + "/" + v) == False):
+                os.mkdir(RANDOM_PATH + "/" + bench_name + "/" + v)
 
 def removeDirectories(bench_name):
     if (os.path.exists(WHERE_AM_I + '/' + bench_name + '_results')):
-        rmtree(WHERE_AM_I + '/' + bench_name + '_results')
+        rmtree(WHERE_AM_I + '/' + bench_name + '_results', ignore_errors=True)
 
     if(os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs")):
-        rmtree(BENCH_BIN_DIR[bench_name] + "/outputs")
+        rmtree(BENCH_BIN_DIR[bench_name] + "/outputs", ignore_errors=True)
 
-    if(os.path.exists(BENCH_INPUT_HOME + "random")):
-        rmtree(BENCH_INPUT_HOME + "random")
+    if(os.path.exists(RANDOM_PATH)):
+        rmtree(BENCH_INPUT_HOME + "random", ignore_errors=True)
 
 def compileBench(bench_name):
     if bench_name not in BENCH_BIN_DIR:
@@ -100,10 +104,10 @@ def getNumberOfErrors(input_path, voltage):
 
     return int(result)
 
-def createRandomInput(input_path, voltage, number_of_errors):
+def createRandomInput(input_path, voltage, number_of_errors, bench_name):
     input_name = input_path.split("/")[-1]
 
-    with open(RANDOM_PATH + "/" + voltage + "/" + input_name, "w") as input_file:
+    with open(RANDOM_PATH + "/" + bench_name + "/" + voltage + "/" + input_name, "w") as input_file:
         for i in range(number_of_errors):
             fault_set = random.randint(0,32)
             fault_byte_offset = random.randint(0,64)
@@ -114,17 +118,13 @@ def createRandomInput(input_path, voltage, number_of_errors):
 
             input_file.write(line)
 
-def createRandomInputs():
+def createRandomInputs(bench_name):
     for voltage in voltages:
         input_paths = glob.glob(BENCH_INPUT_HOME + voltage + "/BRAM_*.txt")
 
         for input_path in input_paths:
             number_of_errors = getNumberOfErrors(input_path, voltage)
-            createRandomInput(input_path, voltage, number_of_errors)
-
-            
-    number_of_errors = getNumberOfErrors(input_path, voltage)
-    createRandomInput(input_path, voltage, number_of_errors)
+            createRandomInput(input_path, voltage, number_of_errors, bench_name)
 
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -165,7 +165,7 @@ def get_arguments():
 
     return parser.parse_args()
 
-def get_binary_options(args, voltage="", is_golden = False, input_name=""):
+def get_binary_options(args, voltage="", is_golden = False, input_name="", is_random = False):
         bench_binary_options = ''
 
         if(args.bench_name == "blackscholes"):

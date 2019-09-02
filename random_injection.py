@@ -120,9 +120,9 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[self.args.bench_name]
 
-        bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
+        bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name, is_random=True)
 
-        input_path = '--input-path ' + BENCH_INPUT_HOME + "random/" + self.voltage + "/" + self.input_name
+        input_path = '--input-path ' + BENCH_INPUT_HOME + "random/" + self.args.bench_name + "/" + self.voltage + "/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
@@ -159,11 +159,13 @@ if __name__ == '__main__':
     helpers.removeDirectories(args.bench_name) # Remove the results of previous experiments
     helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
 
-    helpers.createRandomInputs()
+    ExperimentManager.run_golden(args)
+
+    helpers.createRandomInputs(args.bench_name)
 
     for voltage in voltages:
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            input_paths = glob.glob(WHERE_AM_I + "/inputs/random/" + voltage + "/BRAM_*.txt")
+            input_paths = glob.glob(WHERE_AM_I + "/inputs/random/" + args.bench_name + "/" + voltage + "/BRAM_*.txt")
 
             method_with_params = partial(run_experiment, args=args, voltage=voltage)
 
