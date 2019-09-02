@@ -20,7 +20,7 @@ CC             = gcc
 LIBS=../../../../src/lib/m5op_x86.o ../../../../src/lib/m5_mmap.o
 INCFLAGS    = -I. -I../../../../src/include/
 OPTFLAGS    = -O3 
-CFLAGS      = --static $(OPTFLAGS) $(DFLAGS) $(INCFLAGS) -DFI
+CFLAGS      += --static $(OPTFLAGS) $(DFLAGS) $(INCFLAGS) $(FIFLAGS)
 H_FILES     = kmeans.h
 COMM_SRC = file_io.c util.c
 SEQ_SRC     = seq_main.c   \
@@ -33,10 +33,10 @@ COMPARE_OBJ = $(COMPARE_SRC:%.c=%.o) $(COMM_SRC:%.c=%.o)
 $(SEQ_OBJ): $(H_FILES)
 
 seq_main.o: seq_main.c $(H_FILES)
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) $(INCFLAGS) -c $*.c
 
 seq_kmeans.o: seq_kmeans.c $(H_FILES)
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) $(INCFLAGS) -c $*.c
 
 wtime.o: wtime.c
 	$(CC) $(CFLAGS) -c $*.c
