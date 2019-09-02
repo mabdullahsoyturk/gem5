@@ -203,7 +203,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name=""):
             if(is_golden):
                 kmeans_output = "--kmeans-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                kmeans_output = "--kmeans-output=" + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name
+                kmeans_output = "--kmeans-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
             kmeans_options = ' '.join([kmeans_o, kmeans_b, kmeans_n, kmeans_i, kmeans_output])
             bench_binary_options = kmeans_options
@@ -259,22 +259,27 @@ def write_results(input_name, args, voltage, result):
 
             line = ",".join([input_name[:-4], result, RE, ABSE + "\n"])
         elif(args.bench_name == "Kmeans"):
-            cluster_relative_error = ""
-            cluster_absolute_error = ""
-            correct_membership_percentage = ""
+            cluster_relative_error = "inf"
+            cluster_absolute_error = "inf"
+            correct_membership_percentage = "inf"
 
             if(result != "Crash"):
-                compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name
+                grep_number_of_lines = 'grep "[0-9]" ' + args.kmeans_i + " -c"
+                number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+
+                compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name + " " + number_of_lines
                 compare_string = ''
                 try:
                     compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
                     print("Exception while writing results")
                     print(str(e))
-                output = compare_string.split(",")
-                cluster_relative_error = output[0].strip()
-                cluster_absolute_error = output[1].strip()
-                correct_membership_percentage = output[2].strip()
+
+                output = compare_string.rstrip().split("\n")
+                res = output[-1].split(",")
+                cluster_relative_error = res[0]
+                cluster_absolute_error = res[1]
+                correct_membership_percentage = res[2]
 
             line = ",".join([input_name[:-4], result, cluster_relative_error, cluster_absolute_error, correct_membership_percentage + "\n"])
 

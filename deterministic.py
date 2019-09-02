@@ -94,17 +94,34 @@ class ExperimentManager:
                 print(str(e))
                 sys.exit(str(e))
         elif(self.args.bench_name == "Kmeans"):
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin.membership"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name + ".membership"
+            #cluster_relative_error = "inf"
+            #cluster_absolute_error = "inf"
+            #correct_membership_percentage = "inf"
 
+            grep_number_of_lines = 'grep "[0-9]" ' + self.args.kmeans_i + " -c"
+            number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+
+            compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
+            print("Compare command : " + compare_command)
+            compare_string = ''
             try:
-                if(filecmp.cmp(output_path, golden_path, shallow=False)):
-                    return True
-                else:
-                    return False
+                compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                print(compare_string)
             except Exception as e:
+                print("Exception while writing results")
                 print(str(e))
-                sys.exit(str(e))
+
+            output = compare_string.rstrip().split("\n")
+            res = output[-1].split(",")
+
+            if(res == ["0","0","1"]):
+                return True
+            else:
+                return False
+
+            #cluster_relative_error = output[0].strip()
+            #cluster_absolute_error = output[1].strip()
+            #correct_membership_percentage = output[2].strip()
 
     def inject(self):
         redirection = '-re'
