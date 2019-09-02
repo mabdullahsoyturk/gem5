@@ -12,6 +12,12 @@
 #include <math.h>
 #include <string.h>
 
+
+#ifdef FI 
+#include <m5ops.h>
+#endif
+
+
 //Precision to use for calculations
 #define fptype double 
 
@@ -43,146 +49,7 @@ fptype * otime;
 int numError = 0;
 int nThreads=1;
 
-const float loge =  0.69314718055995f;
-float *pt;
-int prec;
-
 #define inv_sqrt_2xPI 0.39894228040143270286
-
-
-
-
-
-
-
-
-#define __HI(x) *(1+(int*)&x)
-#define __LO(x) (*(int*)&x)
-#define __HIp(x) *(1+(int*)x)
-#define __LOp(x) *(int*)x
-
-
-static double
-one	= 1.0,
-    halF[2]	= {0.5,-0.5,},
-    huge	= 1.0e+300,
-    twom1000= 9.33263618503218878990e-302,     /* 2**-1000=0x01700000,0*/
-    o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
-    u_threshold= -7.45133219101941108420e+02,  /* 0xc0874910, 0xD52D3051 */
-    ln2HI[2]   ={ 6.93147180369123816490e-01,  /* 0x3fe62e42, 0xfee00000 */
-        -6.93147180369123816490e-01,},/* 0xbfe62e42, 0xfee00000 */
-        ln2LO[2]   ={ 1.90821492927058770002e-10,  /* 0x3dea39ef, 0x35793c76 */
-            -1.90821492927058770002e-10,},/* 0xbdea39ef, 0x35793c76 */
-            invln2 =  1.44269504088896338700e+00, /* 0x3ff71547, 0x652b82fe */
-            P1   =  1.66666666666666019037e-01, /* 0x3FC55555, 0x5555553E */
-            P2   = -2.77777777770155933842e-03, /* 0xBF66C16C, 0x16BEBD93 */
-            P3   =  6.61375632143793436117e-05, /* 0x3F11566A, 0xAF25DE2C */
-            P4   = -1.65339022054652515390e-06, /* 0xBEBBBD41, 0xC5D26BF1 */
-            P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
-
-double FAST_EXP( double x )	/* default IEEE double exp */
-{
-    double y,hi,lo,c,t;
-    int k,xsb;
-    unsigned hx;
-    k = 0;
-
-    hx  = __HI(x);	/* high word of x */
-    xsb = (hx>>31)&1;		/* sign bit of x */
-    hx &= 0x7fffffff;		/* high word of |x| */
-
-    /* filter out non-finite argument */
-    if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
-        if(hx>=0x7ff00000) {
-            if(((hx&0xfffff)|__LO(x))!=0) 
-                return x+x; 		/* NaN */
-            else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
-        }
-        if(x > o_threshold) return huge*huge; /* overflow */
-        if(x < u_threshold) return twom1000*twom1000; /* underflow */
-    }
-
-    /* argument reduction */
-    if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 */ 
-        if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 */
-            hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
-        } else {
-            k  = (int)(invln2*x+halF[xsb]);
-            t  = k;
-            hi = x - t*ln2HI[0];	/* t*ln2HI is exact here */
-            lo = t*ln2LO[0];
-        }
-        x  = hi - lo;
-    } 
-    else if(hx < 0x3e300000)  {	/* when |x|<2**-28 */
-        if(huge+x>one) return one+x;/* trigger inexact */
-    }
-    else k = 0;
-
-    /* x is now in primary range */
-    t  = x*x;
-    c  = x - t*(P1+t*(P2+t*(P3+t*(P4+t*P5))));
-    if(k==0) 	return one-((x*c)/(c-2.0)-x); 
-    else 		y = one-((lo-(x*c)/(2.0-c))-hi);
-    if(k >= -1021) {
-        __HI(y) += (k<<20);	/* add k to y's exponent */
-        return y;
-    } else {
-        __HI(y) += ((k+1000)<<20);/* add k to y's exponent */
-        return y*twom1000;
-    }
-    return x;
-}
-
-
-
-double icsi_log_v2(const float val, register float* const pTable, register const unsigned precision)
-{
-    /* get access to float bits */
-    register const int* const pVal = (const int*)(&val);
-
-    /* extract exponent and mantissa (quantized) */
-    register const int exp = ((*pVal >> 23) & 255) - 127;
-    register const int man = (*pVal & 0x7FFFFF) >> (23 - precision);
-
-    /* exponent plus lookup refinement */
-    return ((double)(exp) + pTable[man]) * loge;
-}
-
-
-
-void fill_icsi_log_table2(const unsigned precision, float* const   pTable)
-{
-    /* step along table elements and x-axis positions
-     *      (start with extra half increment, so the steps intersect at their midpoints.) */
-    float oneToTwo = 1.0f + (1.0f / (float)( 1 <<(precision + 1) ));
-    int i;
-    for(i = 0;  i < (1 << precision);  ++i )
-    {
-        // make y-axis value for table element
-        pTable[i] = logf(oneToTwo) / loge ;
-
-        oneToTwo += 1.0f / (float)( 1 << precision );
-    }
-}
-
-float my_sqrt(const float x)  
-{
-    union
-    {
-        int i;
-        float x;
-    } u;
-    u.x = x;
-    u.i = (1<<29) + (u.i >> 1) - (1<<22); 
-
-    // Two Babylonian Steps (simplified from:)
-    // u.x = 0.5f * (u.x + x/u.x);
-    // u.x = 0.5f * (u.x + x/u.x);
-    u.x =       u.x + x/u.x;
-    u.x = 0.25f*u.x + x/u.x;  
-    return u.x;
-}
 
 
 
@@ -212,7 +79,7 @@ fptype CNDF (double InputX )
     xInput = InputX;
 
     // Compute NPrimeX term common to both four & six decimal accuracy calcs
-    expValues = FAST_EXP(-0.5f * InputX * InputX);
+    expValues = exp(-0.5f * InputX * InputX);
     xNPrimeofX = expValues;
     xNPrimeofX = xNPrimeofX * inv_sqrt_2xPI;
 
@@ -243,7 +110,6 @@ fptype CNDF (double InputX )
         OutputX = 1.0 - OutputX;
     }
     return OutputX;
-    return OutputX;
 } 
 
 
@@ -259,7 +125,7 @@ void print_xmm(fptype in, char* s) {
 
 fptype BlkSchlsEqEuroNoDiv( fptype sptprice,
         fptype strike, fptype rate, fptype volatility,
-        fptype time, int otype, float timet )
+        fptype time, int otype )
 {
     fptype OptionPrice;
 
@@ -286,7 +152,7 @@ fptype BlkSchlsEqEuroNoDiv( fptype sptprice,
 
     xTime = time;
 
-    logValues = icsi_log_v2(sptprice / strike , pt, prec);
+    logValues = log(sptprice );
 
 
     xLogTerm = logValues;
@@ -299,7 +165,7 @@ fptype BlkSchlsEqEuroNoDiv( fptype sptprice,
     xD1 = xD1 + xLogTerm;
 
 
-    xSqrtTime = my_sqrt(xTime);
+    xSqrtTime = sqrt(xTime);
 
 
     xDen = xVolatility * xSqrtTime;
@@ -307,7 +173,7 @@ fptype BlkSchlsEqEuroNoDiv( fptype sptprice,
     NofXd1 = CNDF( xD1 );
     xD2 = xD1 -  xDen;
     NofXd2 = CNDF( xD2 );
-    FutureValueX = strike * ( FAST_EXP ( -(rate)*(time) ) );          
+    FutureValueX = strike * ( exp( -(rate)*(time) ) );          
 
     if (otype == 0) {            
         OptionPrice = (sptprice * NofXd1) - (FutureValueX * NofXd2);
@@ -328,18 +194,10 @@ fptype BlkSchlsEqEuroNoDiv( fptype sptprice,
 
 int bs_thread(void *tid_ptr) {
     int i;
-    fptype price;
-    int tid = *(int *)tid_ptr;
-    int start = tid * (numOptions / nThreads);
-    int end = start + (numOptions / nThreads);
-    for (i=start; i<end; i++) {
-        /* Calling main function to calculate option value based on 
-         * Black & Sholes's equation.
-         */
-        price = BlkSchlsEqEuroNoDiv( sptprice[i], strike[i],
+    for (i=0; i<numOptions; i++) {
+            prices[i] = BlkSchlsEqEuroNoDiv( sptprice[i], strike[i],
                 rate[i], volatility[i], otime[i], 
-                otype[i], 0);
-        prices[i] = price;
+                otype[i]);;
 
     }
     return 0;
@@ -389,7 +247,7 @@ int main (int argc, char **argv)
     {
         rv = fscanf(file, "%lf %lf %lf %lf %lf %lf %c %lf %lf", &data[loopnum].s, &data[loopnum].strike, &data[loopnum].r, &data[loopnum].divq, &data[loopnum].v, &data[loopnum].t, &data[loopnum].OptionType, &data[loopnum].divs, &data[loopnum].DGrefval);
         if(rv != 9) {
-            printf("Error: Unable to read from file `%s'.\n", inputFile);
+            printf("Error: Unable to read from file `%s' %d %d.\n", inputFile,loopnum,numOptions);
             fclose(file);
             exit(1);
         }
@@ -426,14 +284,17 @@ int main (int argc, char **argv)
     }
 
     printf("Size of data: %ld\n", numOptions * (sizeof(OptionData) + sizeof(int)));
-    
-    prec = 20;
-    int size = pow(2,prec);
-    pt= (float*) malloc (sizeof(float)*size);
-    fill_icsi_log_table2(prec,pt);
-
     i =0;
+
+#ifdef FI
+   fi_activate(0,START);
+#endif
+
     bs_thread((void*) &i );
+
+#ifdef FI
+   fi_activate(0,STOP);
+#endif
 
     file = fopen(outputFile, "wb");
     if(file == NULL) {
@@ -448,8 +309,8 @@ int main (int argc, char **argv)
         fclose(file);
         exit(1);
     }
-    
-    res = fwrite(prices, sizeof(fptype), numOptions, file);
+    for ( i = 0 ; i < numOptions; i++) 
+        res = fwrite(&prices[i], sizeof(fptype), 1, file);
 
     if(res != numOptions) {
         printf("Error: Unable to write to file `%s'.\n", outputFile);

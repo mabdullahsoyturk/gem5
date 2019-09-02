@@ -3,7 +3,7 @@
 #include <math.h>
 
 double relerror(double golden, double test){
-    if (fpclassify(golden) != FP_ZERO )
+    if (golden != 0.0 )
         return fabs( (fabs(golden) - fabs(test))/golden);
     else
         return fabs(fabs(golden) - fabs(test));
@@ -69,7 +69,6 @@ int main(int argc, char *argv[]){
             printf("Rel Error is 1.0 AbsError is 1.0 \n");
             return 1;
         }
-
         relErr += relerror(val1,val2);        
         absErr += abserror(val1, val2);        
         if (feof(golden) || feof(test) ){

@@ -143,6 +143,7 @@ double jacobi(double *A, double *x, double *x1,  double *b, double* y,
 int main(int argc, char* argv[]) {
     double *x, itol, *y, *x1;
     double *mat, *b;
+    int i;
     long N;
     char *endptr;
     int diagonally_dominant;
@@ -218,8 +219,11 @@ int main(int argc, char* argv[]) {
     }
         
     fwrite(&N, sizeof(long), 1, output);
-    fwrite(x, sizeof(double), N, output);
-    fwrite(y, sizeof(double), N, output);
+
+    for ( i = 0 ; i < N ; i++)
+        fwrite(&x[i], sizeof(double), 1, output);
+    for ( i = 0 ; i < N ; i++)
+        fwrite(&y[i], sizeof(double), 1, output);
 
     fclose(output);
     free(x1);
