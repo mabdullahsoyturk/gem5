@@ -94,10 +94,6 @@ class ExperimentManager:
                 print(str(e))
                 sys.exit(str(e))
         elif(self.args.bench_name == "Kmeans"):
-            #cluster_relative_error = "inf"
-            #cluster_absolute_error = "inf"
-            #correct_membership_percentage = "inf"
-
             grep_number_of_lines = 'grep "[0-9]" ' + self.args.kmeans_i + " -c"
             number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
 
@@ -118,10 +114,6 @@ class ExperimentManager:
                 return True
             else:
                 return False
-
-            #cluster_relative_error = output[0].strip()
-            #cluster_absolute_error = output[1].strip()
-            #correct_membership_percentage = output[2].strip()
 
     def inject(self):
         redirection = '-re'
