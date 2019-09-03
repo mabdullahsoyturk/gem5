@@ -16,6 +16,10 @@ parser = OptionParser()
 parser.add_option("-c", "--bench-path", help="Binary of the program to be simulated")
 parser.add_option("--input-path", help="Fault input file", default=input_file)
 
+# Options for dct application : example run: ./dct <inputFile> <outputFile>
+parser.add_option("--dct-input", help="Input file for dct application", default="")
+parser.add_option("--dct-output", help="Output file for dct application", default="")
+
 # Options for blackscholes application : example run: ./blackscholes <inputFile> <outputFile>
 parser.add_option("--blackscholes-input", help="Input file for blackscholes application", default="")
 parser.add_option("--blackscholes-output", help="Output file for blackscholes application", default="")
@@ -97,6 +101,8 @@ process = Process()
 
 if(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/blackscholes/blackscholes')):
     process.cmd = [opts.bench_path] + [opts.blackscholes_input, opts.blackscholes_output]
+elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/dct/dct')):
+    process.cmd = [opts.bench_path] + [opts.dct_input, opts.dct_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/jacobi/jacobi')):
     process.cmd = [opts.bench_path] + [opts.jacobi_n, opts.jacobi_itol, opts.jacobi_dominant, opts.jacobi_maxiters, opts.jacobi_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/Kmeans/seq_main')):

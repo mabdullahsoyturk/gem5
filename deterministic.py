@@ -81,25 +81,14 @@ class ExperimentManager:
             return True
 
     def is_correct(self):
-        if(self.args.bench_name != "Kmeans"):
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
-
-            try:
-                if(filecmp.cmp(output_path, golden_path, shallow=False)):
-                    return True
-                else:
-                    return False
-            except Exception as e:
-                print(str(e))
-                sys.exit(str(e))
-        elif(self.args.bench_name == "Kmeans"):
+        if(self.args.bench_name == "Kmeans"):
             grep_number_of_lines = 'grep "[0-9]" ' + self.args.kmeans_i + " -c"
             number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
 
             compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
             print("Compare command : " + compare_command)
             compare_string = ''
+
             try:
                 compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 print(compare_string)
@@ -114,6 +103,34 @@ class ExperimentManager:
                 return True
             else:
                 return False
+        elif(self.args.bench_name == "dct"):
+            quality_command = BENCH_BIN_DIR["dct"] + "/quality " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + self.voltage + "/" + self.input_name
+            quality_string = ""
+            
+            try:
+                quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+            except Exception as e:
+                print(str(e))
+
+            output = quality_string.split(",")
+            is_correct = output[0].strip()
+            
+            if(is_correct == "Correct"):
+                return True
+            else:
+                return False
+        else:
+            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
+
+            try:
+                if(filecmp.cmp(output_path, golden_path, shallow=False)):
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                print(str(e))
+                sys.exit(str(e))
 
     def inject(self):
         redirection = '-re'

@@ -23,7 +23,8 @@ BENCH_BIN_DIR = {
     'jacobi' : os.path.abspath(BENCH_BIN_HOME + '/jacobi'),
     'Kmeans' : os.path.abspath(BENCH_BIN_HOME + '/Kmeans'),
     'monteCarlo' : os.path.abspath(BENCH_BIN_HOME + '/monteCarlo'),
-    'sobel' : os.path.abspath(BENCH_BIN_HOME + '/sobel')
+    'sobel' : os.path.abspath(BENCH_BIN_HOME + '/sobel'),
+    'dct' : os.path.abspath(BENCH_BIN_HOME + '/dct')
 }
 
 BENCH_BINARY = {
@@ -32,7 +33,8 @@ BENCH_BINARY = {
     'jacobi' : os.path.abspath(BENCH_BIN_DIR["jacobi"] + '/jacobi'),
     'Kmeans' : os.path.abspath(BENCH_BIN_DIR["Kmeans"] + '/seq_main'),
     'monteCarlo' : os.path.abspath(BENCH_BIN_DIR["monteCarlo"] + '/monte_carlo'),
-    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/sobel')
+    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/sobel'),
+    'dct' : os.path.abspath(BENCH_BIN_DIR["dct"] + '/dct')
 }
 
 BENCH_GOLDEN = {
@@ -41,7 +43,8 @@ BENCH_GOLDEN = {
     'jacobi' : os.path.abspath(BENCH_BIN_DIR["jacobi"] + '/golden.bin'),
     'Kmeans' : os.path.abspath(BENCH_BIN_DIR["Kmeans"] + '/golden.bin'),
     'monteCarlo' : os.path.abspath(BENCH_BIN_DIR["monteCarlo"] + '/golden.bin'),
-    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/golden.bin')
+    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/golden.bin'),
+    'dct' : os.path.abspath(BENCH_BIN_DIR["dct"] + '/golden.bin') 
 }
 
 def makeDirectories(bench_name, is_deterministic):
@@ -131,6 +134,10 @@ def get_arguments():
     parser.add_argument('-c','--bench-name', help='Benchmark\'s name', default='matrix_mul')
     parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags')
 
+    # Options for dct application : example run: ./dct <inputFile> <outputFile>
+    parser.add_argument("--dct-input", help="Input file for dct application", default="")
+    parser.add_argument("--dct-output", help="Output file for dct application", default="")
+
     # Options for blackscholes application : example run: ./blackscholes <inputFile> <outputFile>
     parser.add_argument("--blackscholes-input", help="Input file for blackscholes application", default="")
     parser.add_argument("--blackscholes-output", help="Output file for blackscholes application", default="")
@@ -175,10 +182,21 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 blackscholes_output = "--blackscholes-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR["blackscholes"] + "/outputs/" + voltage + "/" + input_name
+                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
             blackscholes_options = ' '.join([blackscholes_input, blackscholes_output])
             bench_binary_options = blackscholes_options
+        elif(args.bench_name == "dct"):
+            dct_input = "--dct-input=" + args.dct_input
+            dct_output = ""
+
+            if(is_golden):
+                dct_output = "--dct-output=" + BENCH_GOLDEN[args.bench_name]
+            else:
+                dct_output = "--dct-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
+
+            dct_options = ' '.join([dct_input, dct_output])
+            bench_binary_options = dct_options
         elif(args.bench_name == "jacobi"):
             jacobi_n = "--jacobi-n=" + args.jacobi_n
             jacobi_itol = "--jacobi-itol=" + args.jacobi_itol
@@ -189,7 +207,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 jacobi_output = "--jacobi-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                jacobi_output = "--jacobi-output=" + BENCH_BIN_DIR["jacobi"] + "/outputs/" + voltage + "/" + input_name
+                jacobi_output = "--jacobi-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
             jacobi_options = ' '.join([jacobi_n, jacobi_itol, jacobi_dominant, jacobi_maxiters, jacobi_output])
             bench_binary_options = jacobi_options
@@ -216,7 +234,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 monte_output = "--monte-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                monte_output = "--monte-output=" + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
+                monte_output = "--monte-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
             monte_options = ' '.join([monte_x, monte_y, monte_walks, monte_tasks, monte_output])
             bench_binary_options = monte_options
@@ -226,7 +244,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 sobel_output = "--sobel-output=" + BENCH_GOLDEN[args.bench_name]
             else:
-                sobel_output = "--sobel-output=" + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name     
+                sobel_output = "--sobel-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name     
 
             sobel_options = ' '.join([sobel_input, sobel_output])
             bench_binary_options = sobel_options
@@ -235,7 +253,7 @@ def get_binary_options(args, voltage="", is_golden = False, input_name="", is_ra
             if(is_golden):
                 matrix_output = "--matrix-output=" + args.matrix_output
             else:
-                matrix_output = "--matrix-output=" + BENCH_BIN_DIR["matrix_mul"] + "/outputs/" + voltage + "/" + input_name
+                matrix_output = "--matrix-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
             matrix_options = ' '.join([matrix_output])
             bench_binary_options = matrix_options
@@ -258,6 +276,28 @@ def write_results(input_name, args, voltage, result):
                 ABSE = output[1].strip()
 
             line = ",".join([input_name[:-4], result, RE, ABSE + "\n"])
+        if(args.bench_name == "dct"):
+            quality = "0.0"
+            is_correct = "Crash"
+            
+            if(result != "Crash"):
+                quality_command = BENCH_BIN_DIR["dct"] + "/quality " + args.dct_input + " " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + voltage + "/" + input_name
+                quality_string = ""
+
+                print(quality_command)
+
+                try:
+                    quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                    print(quality_string)
+                except Exception as e:
+                    print(str(e))
+
+                output = quality_string.split(",")
+                is_correct = output[0].strip()
+                quality = output[1].strip()
+
+            line = ",".join([input_name[:-4], result, is_correct, quality + "\n"])
+
         elif(args.bench_name == "Kmeans"):
             cluster_relative_error = "inf"
             cluster_absolute_error = "inf"
