@@ -1,0 +1,21 @@
+INPUT FILE is under ./figs/input.grey
+
+To execute:
+./dct 'input file' 'output file' 
+A full comparison is as follows:
+
+1) Create Golden
+./dct figs/input.grey golden.grey
+
+2) Run simulation with DCT 
+./dct figs/input.grey experimentX.grey
+
+3)Get the quality output
+./quality figs/input.grey golden.grey experimentX.grey 
+
+======================
+The quality returns:
+string,float
+
+if string == Correct then we have a correct output
+if string != Correct the float states the quality of the output    
