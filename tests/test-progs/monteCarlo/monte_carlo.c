@@ -52,17 +52,12 @@ double calc_sphere_rad2D(double x[], double D[])
 	m1 = x[0];
 	m2 = D[1] - x[1];
 	m3 = x[1];
-#if 1
+
 	A = (m1<m0);
 	B = (m2<m0) & (m2<m1);
 	C = (m3<m0) & (m3<m1) & (m3<m2);
 	index = ((C|B)<<1) | ((C|(A&(!B)))&1);
-#else
-	A = (m1 < m0);
-	B = (m3 < m2);
-	C = (cur_min[B+2] < cur_min[A]);
-	index = (C<<1) | ((B&C)|(A&(!C))&1);
-#endif
+
 	switch(index) {
 		case 0: return m0;
 		case 1: return m1;
@@ -198,7 +193,14 @@ int main(int argc, char* argv[])
 	walks   = atoi(argv[3]);
 	tasks   = atoi(argv[4]);
 	out     = fopen(argv[5], "wb");
+    printf ("Command was : %s %s %s %s %s %s\n", argv[0],argv[1],argv[2],argv[3],argv[4],argv[5]);
+
+    if (!out ){
+        printf("I can not open file %s\n", argv[5]);
+        exit(-1);
+    }
 	// alloc points
+
 	nodes = calc_nodes(&points, D, nodes_x, nodes_y);
 	estimation = (double*) malloc(sizeof(double)*nodes);
 	assert(points);
@@ -219,10 +221,20 @@ int main(int argc, char* argv[])
 
 	dur = my_time() - dur;
 	printf("Duration: %ld\n", dur);
-	fwrite(&nodes, sizeof(long), 1, out);
-	fwrite(&dur, sizeof(long), 1, out);
-	for (i=0; i<nodes; ++i)
-	    fwrite(&estimation[i], sizeof(double), 1, out);
+	if ( fwrite(&nodes, sizeof(long), 1, out) != 1 ){
+        printf("I can not write to file %s\n", argv[5]);
+        exit(-1);
+    }
+	if ( fwrite(&dur, sizeof(long), 1, out) != 1 ){
+        printf("I can not write to file %s\n", argv[5]);
+        exit(-1);
+    }
+	for (i=0; i<nodes; ++i){
+	    if (fwrite(&estimation[i], sizeof(double), 1, out) != 1){
+            printf("I can not write to file %s\n", argv[5]);
+            exit(-1);
+        }
+    }
 	free(points);
 	free(estimation);
 	fclose(out);
