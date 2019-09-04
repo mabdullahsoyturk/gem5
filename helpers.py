@@ -270,7 +270,14 @@ def write_results(input_name, args, voltage, result):
             if(result != "Crash"):
                 output_name = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
                 error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + output_name + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-                error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                error_string = ""
+                try:
+                    error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                except Exception as e:
+                    print("Error command failed " + str(e))
+
+                if(error_string == ""):
+                    print("Error string should not have been empty")
                 output = error_string.split(",")
                 RE = output[0].strip()
                 ABSE = output[1].strip()
@@ -278,19 +285,19 @@ def write_results(input_name, args, voltage, result):
             line = ",".join([input_name[:-4], result, RE, ABSE + "\n"])
         if(args.bench_name == "dct"):
             quality = "0.0"
-            is_correct = "Crash"
             
             if(result != "Crash"):
                 quality_command = BENCH_BIN_DIR["dct"] + "/quality " + args.dct_input + " " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + voltage + "/" + input_name
                 quality_string = ""
 
-                print(quality_command)
-
                 try:
                     quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                     print(quality_string)
                 except Exception as e:
-                    print(str(e))
+                    print("Quality command failed: " + str(e))
+
+                if(quality_string == ""):
+                    print("Quality string should not have been empty")
 
                 output = quality_string.split(",")
                 quality = output[1].strip()
@@ -304,16 +311,25 @@ def write_results(input_name, args, voltage, result):
 
             if(result != "Crash"):
                 grep_number_of_lines = 'grep "[0-9]" ' + args.kmeans_i + " -c"
-                number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                number_of_lines = ""
+
+                try:
+                    number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                except Exception as e:
+                    print("Number of lines command failed" + str(e))
+                
+                if(number_of_lines == ""):
+                    print("Number of lines should not have been empty")
 
                 compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name + " " + number_of_lines
                 compare_string = ''
                 try:
                     compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Exception while writing results")
-                    print(str(e))
+                    print("Compare command failed " + str(e))
 
+                if(compare_string == ""):
+                    print("Compare string should not have been empty")
                 output = compare_string.rstrip().split("\n")
                 res = output[-1].split(",")
                 cluster_relative_error = res[0]
@@ -332,14 +348,13 @@ def write_results(input_name, args, voltage, result):
                 try:
                     calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Exception while writing results")
-                    print(str(e))
+                    print("Calc errors command failed " + str(e))
+
+                if(calc_errors_string == ""):
+                    print("Calc errors string should not have been empty")
                 output = calc_errors_string.split(",")
                 MSE = output[0].strip()
                 RE = output[1].strip()
-
-                print("MSE " + MSE)
-                print("RE " + RE)
 
             line = ",".join([input_name[:-4], result, MSE, RE + "\n"])
         elif(args.bench_name == "sobel"):
@@ -347,7 +362,15 @@ def write_results(input_name, args, voltage, result):
 
             if(result != "Crash"):
                 psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
-                psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                psnr_string = ""
+
+                try:
+                    psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+                except Exception as e:
+                    print("Psnr command failed " + str(e))
+
+                if(psnr_string == ""):
+                    print("Psnr string should not have been empty")
                 psnr = psnr_string.split(":")[1].strip()
 
             line = ",".join([input_name[:-4], result, psnr + "\n"])

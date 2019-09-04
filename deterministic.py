@@ -73,7 +73,7 @@ class ExperimentManager:
             result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             decoded_result = result.decode('utf-8')
         except Exception as e:
-            print(str(e))
+            print("Is crash check failed " + str(e))
 
         if decoded_result and len(decoded_result) > 0:
             return False
@@ -83,18 +83,26 @@ class ExperimentManager:
     def is_correct(self):
         if(self.args.bench_name == "Kmeans"):
             grep_number_of_lines = 'grep "[0-9]" ' + self.args.kmeans_i + " -c"
-            number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+            number_of_lines = ""
+            
+            try:
+                number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+            except Exception as e:
+                print("Number of lines failed " + str(e))
+
+            if(number_of_lines == ""):
+                print("Number of lines should not have been empty")
 
             compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
-            print("Compare command : " + compare_command)
             compare_string = ''
 
             try:
                 compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
-                print(compare_string)
             except Exception as e:
-                print("Exception while writing results")
-                print(str(e))
+                print("Compare command failed " + str(e))
+
+            if(compare_string == ""):
+                print("Compare string should not have been empty")
 
             output = compare_string.rstrip().split("\n")
             res = output[-1].split(",")
@@ -110,7 +118,7 @@ class ExperimentManager:
             try:
                 quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
             except Exception as e:
-                print(str(e))
+                print("Quality command failed " + str(e))
 
             output = quality_string.split(",")
             is_correct = output[0].strip()
@@ -129,7 +137,7 @@ class ExperimentManager:
                 else:
                     return False
             except Exception as e:
-                print(str(e))
+                print("Comparison failed" + str(e))
                 sys.exit(str(e))
 
     def inject(self):
@@ -150,7 +158,7 @@ class ExperimentManager:
 
         bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
 
-        input_path = '--input-path ' + BENCH_INPUT_HOME + voltage + "/" + self.input_name
+        input_path = '--input-path=' + BENCH_INPUT_HOME + voltage + "/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
@@ -158,7 +166,8 @@ class ExperimentManager:
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+            print("Crashed because " + str(e))
             return "Crash"
 
         if self.is_crash():
@@ -189,7 +198,7 @@ if __name__ == '__main__':
     ExperimentManager.run_golden(args)
 
     for voltage in voltages:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
             input_paths = glob.glob(WHERE_AM_I + "/inputs/" + voltage + "/BRAM_*.txt")
 
             method_with_params = partial(run_experiment, args=args, voltage=voltage)

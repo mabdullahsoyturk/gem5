@@ -138,7 +138,7 @@ class ExperimentManager:
 
         bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name, is_random=True)
 
-        input_path = '--input-path ' + BENCH_INPUT_HOME + "random/" + self.args.bench_name + "/" + self.voltage + "/" + self.input_name
+        input_path = '--input-path=' + BENCH_INPUT_HOME + "random/" + self.args.bench_name + "/" + self.voltage + "/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 

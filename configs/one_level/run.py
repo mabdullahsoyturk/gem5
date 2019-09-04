@@ -100,6 +100,7 @@ system.mem_ctrl.port = system.membus.master
 process = Process()
 
 if(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/blackscholes/blackscholes')):
+    print([opts.bench_path] + [opts.blackscholes_input, opts.blackscholes_output])
     process.cmd = [opts.bench_path] + [opts.blackscholes_input, opts.blackscholes_output]
 elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/dct/dct')):
     process.cmd = [opts.bench_path] + [opts.dct_input, opts.dct_output]
