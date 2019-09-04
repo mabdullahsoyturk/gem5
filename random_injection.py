@@ -79,9 +79,9 @@ class ExperimentManager:
             return True
 
     def is_correct(self):
-        if(self.args.bench_name != "Kmeans"):
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
+        if(self.args.bench_name == "Kmeans"):
+            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin.membership"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name + ".membership"
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):
@@ -91,9 +91,25 @@ class ExperimentManager:
             except Exception as e:
                 print(str(e))
                 sys.exit(str(e))
-        elif(self.args.bench_name == "Kmeans"):
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin.membership"
-            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name + ".membership"
+        elif(self.args.bench_name == "dct"):
+            quality_command = BENCH_BIN_DIR["dct"] + "/quality " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + self.voltage + "/" + self.input_name
+            quality_string = ""
+            
+            try:
+                quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
+            except Exception as e:
+                print(str(e))
+
+            output = quality_string.split(",")
+            is_correct = output[0].strip()
+            
+            if(is_correct == "Correct"):
+                return True
+            else:
+                return False
+        else:
+            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
+            output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
             try:
                 if(filecmp.cmp(output_path, golden_path, shallow=False)):

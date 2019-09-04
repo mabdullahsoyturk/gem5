@@ -293,10 +293,9 @@ def write_results(input_name, args, voltage, result):
                     print(str(e))
 
                 output = quality_string.split(",")
-                is_correct = output[0].strip()
                 quality = output[1].strip()
 
-            line = ",".join([input_name[:-4], result, is_correct, quality + "\n"])
+            line = ",".join([input_name[:-4], result, quality + "\n"])
 
         elif(args.bench_name == "Kmeans"):
             cluster_relative_error = "inf"
