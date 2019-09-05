@@ -146,7 +146,8 @@ class ExperimentManager:
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, subprocess.SubprocessError) as e:
+            print("Crashed because " + str(e))
             return "Crash"
 
         if self.is_crash():

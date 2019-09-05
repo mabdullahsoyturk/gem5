@@ -73,8 +73,8 @@ def removeDirectories(bench_name):
     if(os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs")):
         rmtree(BENCH_BIN_DIR[bench_name] + "/outputs", ignore_errors=True)
 
-    if(os.path.exists(RANDOM_PATH)):
-        rmtree(BENCH_INPUT_HOME + "random", ignore_errors=True)
+    if(os.path.exists(RANDOM_PATH + "/" + bench_name)):
+        rmtree(RANDOM_PATH + "/" + bench_name , ignore_errors=True)
 
 def compileBench(bench_name):
     if bench_name not in BENCH_BIN_DIR:
