@@ -112,12 +112,13 @@ def createRandomInput(input_path, voltage, number_of_errors, bench_name):
 
     with open(RANDOM_PATH + "/" + bench_name + "/" + voltage + "/" + input_name, "w") as input_file:
         for i in range(number_of_errors):
-            fault_set = random.randint(0,32)
-            fault_byte_offset = random.randint(0,64)
-            fault_bit_offset = random.randint(0,8)
+            fault_type = 0
+            fault_set = random.randint(0,31)
+            fault_byte_offset = random.randint(0,63)
+            fault_bit_offset = random.randint(0,7)
             fault_cache_type = "l1d"
 
-            line = ' '.join([str(fault_set), str(fault_byte_offset), str(fault_bit_offset), fault_cache_type + "\n"])
+            line = ' '.join([str(fault_type), str(fault_set), str(fault_byte_offset), str(fault_bit_offset), fault_cache_type + "\n"])
 
             input_file.write(line)
 

@@ -23,23 +23,24 @@ FaultInjector::init(std::string owner)
 
     std::ifstream ifs(inputPath);
     
-    int set,byteOffset,bitOffset;
+    int type,set,byteOffset,bitOffset;
     std::string cacheToBeInserted;
     int numberOfFaults = 0;
 
     DPRINTF(FaultTrace, "\t%s faults:\n\n", owner);
 
     if(ifs.is_open()) {
-        while(ifs >> set >> byteOffset >> bitOffset >> cacheToBeInserted){
+        while(ifs >> type >> set >> byteOffset >> bitOffset >> cacheToBeInserted){
             if((cacheToBeInserted.compare(owner)) == 0) {
                 CacheFault fault;
+                fault.type = type;
                 fault.set = set;
                 fault.byteOffset = byteOffset;
                 fault.bitOffset = bitOffset;
                 fault.cacheToBeInserted = cacheToBeInserted;
 
                 faults.push_back(fault);
-                DPRINTF(FaultTrace, "Set: %#x, Byte Offset: %d, Bit Offset: %d\n", fault.set, fault.byteOffset, fault.bitOffset);
+                DPRINTF(FaultTrace, "Type: %d, Set: %#x, Byte Offset: %d, Bit Offset: %d\n", fault.type, fault.set, fault.byteOffset, fault.bitOffset);
 
                 numberOfFaults++;
             }
@@ -69,13 +70,18 @@ FaultInjector::injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::
     if (!enabled) {
         return;
     }
-    DPRINTF(FaultTrace, "injectFaults method worked\n");
+    DPRINTF(FaultTrace, "injectFaults method is working\n");
     for (std::vector<CacheFault>::iterator it = faults.begin();
                                         it != faults.end(); ++it) {
         CacheBlk* blk = static_cast<CacheBlk*>
                         (tags->findBlockBySetAndWay(it->set, 0));
         if (blk && blk->isValid() && it->cacheToBeInserted == cacheType) {
-            flipBit(*it, blk, blkSize);
+            if(it->type == 0) { // Permanent
+                flipBit(*it, blk, blkSize);
+            }else if(it->type == 1 && isRead && it->is_injected == 0) { // Transient
+                flipBit(*it, blk, blkSize);
+                it->is_injected = 1;
+            }
         }    
     }
 }

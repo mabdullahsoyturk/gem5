@@ -1,8 +1,7 @@
 /** @file
  * Declaration of a structure to insert faults to different levels of caches. 
- * It allows to insert stuck at 0 and stuck at 1 faults for permanent, intermittent 
- * and transient faults that were declared in an input file. In order to see an 
- * example input file, check input.txt in the top level directory of gem5 source code.
+ * It allows to insert stuck at 0 and stuck at 1 faults for permanent and 
+ * transient faults that were declared in an input file.
  */
 
 #ifndef __MEM_CACHE_FAULT_INJECTOR_HH__
@@ -26,10 +25,12 @@ class BaseTags;
 class CacheBlk;
 
 struct CacheFault {
+    int type; // Type of fault : permanent(0) or transient(1)
     int set; // Address of the block that will be corrupted.
     int byteOffset; // Byte offset of the address from the beginning of block address.
     int bitOffset; // Determines which bit of the byte will be corrupted.
-    std::string cacheToBeInserted;
+    std::string cacheToBeInserted; // Indicates which cache to be corrupted.
+    int is_injected = 0; // Do not inject transient fault if already injected.
 };
 
 extern FaultInjector *gFIptr;
@@ -69,7 +70,7 @@ class FaultInjector : public SimObject
          * @param pkt Packet that will be corrupted.
          * @param blkSize Size of one block in cache.
          * @param isRead Indicates whether we inject faults on a read. This is useful because, for example, there is no point of inserting
-         * a transient fault on a write (I am not sure but this logic should probably be changed).  
+         * a transient fault on a write.  
          * @param cacheType Parameter to understand which cache performs the request.
         */
         void injectFaults(BaseTags* tags, unsigned blkSize, bool isRead, std::string cacheType);

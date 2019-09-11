@@ -181,7 +181,7 @@ if __name__ == '__main__':
     helpers.createRandomInputs(args.bench_name)
 
     for voltage in voltages:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
             input_paths = glob.glob(WHERE_AM_I + "/inputs/random/" + args.bench_name + "/" + voltage + "/BRAM_*.txt")
 
             method_with_params = partial(run_experiment, args=args, voltage=voltage)
