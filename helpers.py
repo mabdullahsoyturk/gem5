@@ -134,6 +134,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c','--bench-name', help='Benchmark\'s name', default='matrix_mul')
     parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags')
+    parser.add_argument('-r', '--random', action='store_true')
 
     # Options for dct application : example run: ./dct <inputFile> <outputFile>
     parser.add_argument("--dct-input", help="Input file for dct application", default="")
@@ -176,7 +177,7 @@ def get_arguments():
 def get_binary_options(args, voltage="", is_golden = False, input_name=""):
         bench_binary_options = ''
         golden_option = "--output=" + BENCH_GOLDEN[args.bench_name]
-        faulty_option = golden_option + "/outputs/" + voltage + "/" + input_name
+        faulty_option = "--output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
         output = golden_option if is_golden else faulty_option
 

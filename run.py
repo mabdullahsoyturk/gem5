@@ -1,20 +1,18 @@
 import os
 import sys
 import glob
-import concurrent.futures 
-from functools import partial
-import argparse
 import subprocess
+from functools import partial
+import concurrent.futures 
 import filecmp
 import helpers
 
-#voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
 voltages = helpers.voltages
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
-BENCH_INPUT_HOME = helpers.BENCH_INPUT_HOME
-BENCH_BIN_HOME = helpers.BENCH_BIN_HOME
+BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
+BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
 BENCH_BIN_DIR = helpers.BENCH_BIN_DIR
 BENCH_BINARY = helpers.BENCH_BINARY
 BENCH_GOLDEN = helpers.BENCH_GOLDEN
@@ -29,8 +27,8 @@ class ExperimentManager:
     ##
     def __init__(self, args, input_name, voltage):
         self.args = args
-        self.voltage = voltage
         self.input_name = input_name
+        self.voltage = voltage
 
     @staticmethod
     def run_golden(args):
@@ -60,7 +58,6 @@ class ExperimentManager:
         try:    
             subprocess.check_call(gem5_command, shell=True)
         except Exception as e:
-            print(str(e))
             sys.exit(str(e))
     
 
@@ -73,7 +70,7 @@ class ExperimentManager:
             result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             decoded_result = result.decode('utf-8')
         except Exception as e:
-            print("Is crash check failed " + str(e))
+            print(str(e))
 
         if decoded_result and len(decoded_result) > 0:
             return False
@@ -101,9 +98,6 @@ class ExperimentManager:
             except Exception as e:
                 print("Compare command failed " + str(e))
 
-            if(compare_string == ""):
-                print("Compare string should not have been empty")
-
             output = compare_string.rstrip().split("\n")
             res = output[-1].split(",")
 
@@ -118,7 +112,7 @@ class ExperimentManager:
             try:
                 quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
             except Exception as e:
-                print("Quality command failed " + str(e))
+                print(str(e))
 
             output = quality_string.split(",")
             is_correct = output[0].strip()
@@ -137,7 +131,7 @@ class ExperimentManager:
                 else:
                     return False
             except Exception as e:
-                print("Comparison failed" + str(e))
+                print(str(e))
                 sys.exit(str(e))
 
     def inject(self):
@@ -158,7 +152,7 @@ class ExperimentManager:
 
         bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
 
-        input_path = '--input-path=' + BENCH_INPUT_HOME + voltage + "/" + self.input_name
+        input_path = '--input-path=' + BENCH_INPUT_HOME + (("random/" + self.args.bench_name + "/") if args.random else "") + self.voltage + "/" + self.input_name
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
@@ -166,7 +160,7 @@ class ExperimentManager:
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, subprocess.SubprocessError) as e:
             print("Crashed because " + str(e))
             return "Crash"
 
@@ -194,12 +188,18 @@ if __name__ == '__main__':
    
     helpers.compileBench(args.bench_name)      # Compile benchmarks
     helpers.removeDirectories(args.bench_name) # Remove the results of previous experiments
-    helpers.makeDirectories(args.bench_name, True)   # Make new directories for these experiments
+    helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
+
     ExperimentManager.run_golden(args)
 
+    if(args.random):
+        helpers.createRandomInputs(args.bench_name)
+
     for voltage in voltages:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-            input_paths = glob.glob(WHERE_AM_I + "/inputs/" + voltage + "/BRAM_*.txt")
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor: 
+            inputs = WHERE_AM_I + "/inputs/" + (("random/" + args.bench_name + "/") if args.random else "") + voltage + "/BRAM_*.txt"
+
+            input_paths = glob.glob(inputs)
 
             method_with_params = partial(run_experiment, args=args, voltage=voltage)
 
