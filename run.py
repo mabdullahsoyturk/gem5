@@ -70,7 +70,7 @@ class ExperimentManager:
             result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             decoded_result = result.decode('utf-8')
         except Exception as e:
-            print(str(e))
+            sys.exit(str(e))
 
         if decoded_result and len(decoded_result) > 0:
             return False
@@ -85,10 +85,7 @@ class ExperimentManager:
             try:
                 number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
             except Exception as e:
-                print("Number of lines failed " + str(e))
-
-            if(number_of_lines == ""):
-                print("Number of lines should not have been empty")
+                sys.exit(str(e))
 
             compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
             compare_string = ''
@@ -96,7 +93,7 @@ class ExperimentManager:
             try:
                 compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
             except Exception as e:
-                print("Compare command failed " + str(e))
+                sys.exit(str(e))
 
             output = compare_string.rstrip().split("\n")
             res = output[-1].split(",")
@@ -112,7 +109,7 @@ class ExperimentManager:
             try:
                 quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
             except Exception as e:
-                print(str(e))
+                sys.exit(str(e))
 
             output = quality_string.split(",")
             is_correct = output[0].strip()
@@ -131,7 +128,6 @@ class ExperimentManager:
                 else:
                     return False
             except Exception as e:
-                print(str(e))
                 sys.exit(str(e))
 
     def inject(self):

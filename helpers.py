@@ -85,13 +85,11 @@ def compileBench(bench_name):
     try:    
         subprocess.check_call(["make clean"], shell=True)
     except Exception as e:
-        print(str(e))
         sys.exit(str(e))
 
     try:    
         subprocess.check_call(["make CFLAGS=-DFI"], shell=True)
     except Exception as e:
-        print(str(e))
         sys.exit(str(e))
     os.chdir(WHERE_AM_I) 
 
@@ -103,7 +101,7 @@ def getNumberOfErrors(input_path, voltage):
     try:
         result = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode('utf-8')
     except Exception as e:
-        print(e)
+        sys.exit(str(e))
 
     return int(result)
 
@@ -240,14 +238,14 @@ def write_results(input_name, args, voltage, result):
                 try:
                     error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Error command failed " + str(e))
+                    sys.exit(str(e))
 
                 output = error_string.split(",")
                 RE = output[0].strip()
                 ABSE = output[1].strip()
 
             line = ",".join([input_name[:-4], result, RE, ABSE + "\n"])
-        if(args.bench_name == "dct"):
+        elif(args.bench_name == "dct"):
             quality = "0.0"
             
             if(result != "Crash"):
@@ -257,7 +255,7 @@ def write_results(input_name, args, voltage, result):
                 try:
                     quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Quality command failed: " + str(e))
+                    sys.exit(e)
 
                 output = quality_string.split(",")
                 quality = output[1].strip()
@@ -276,14 +274,14 @@ def write_results(input_name, args, voltage, result):
                 try:
                     number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Number of lines command failed" + str(e))
+                    sys.exit(str(e))
                 
                 compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name + " " + number_of_lines
                 compare_string = ''
                 try:
                     compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Compare command failed " + str(e))
+                    sys.exit(str(e))
 
                 output = compare_string.rstrip().split("\n")
                 res = output[-1].split(",")
@@ -303,7 +301,7 @@ def write_results(input_name, args, voltage, result):
                 try:
                     calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Calc errors command failed " + str(e))
+                    sys.exit(str(e))
 
                 output = calc_errors_string.split(",")
                 MSE = output[0].strip()
@@ -320,7 +318,7 @@ def write_results(input_name, args, voltage, result):
                 try:
                     psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
-                    print("Psnr command failed " + str(e))
+                    sys.exit(str(e))
 
                 psnr = psnr_string.split(":")[1].strip()
 
