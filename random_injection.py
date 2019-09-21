@@ -58,7 +58,6 @@ class ExperimentManager:
         try:    
             subprocess.check_call(gem5_command, shell=True)
         except Exception as e:
-            print(str(e))
             sys.exit(str(e))
     
 

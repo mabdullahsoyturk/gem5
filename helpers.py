@@ -175,88 +175,52 @@ def get_arguments():
 
 def get_binary_options(args, voltage="", is_golden = False, input_name=""):
         bench_binary_options = ''
+        golden_option = "--output=" + BENCH_GOLDEN[args.bench_name]
+        faulty_option = golden_option + "/outputs/" + voltage + "/" + input_name
+
+        output = golden_option if is_golden else faulty_option
 
         if(args.bench_name == "blackscholes"):
             blackscholes_input = "--blackscholes-input=" + args.blackscholes_input
-            blackscholes_output = ""
-
-            if(is_golden):
-                blackscholes_output = "--blackscholes-output=" + BENCH_GOLDEN[args.bench_name]
-            else:
-                blackscholes_output = "--blackscholes-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-
-            blackscholes_options = ' '.join([blackscholes_input, blackscholes_output])
+            
+            blackscholes_options = ' '.join([blackscholes_input, output])
             bench_binary_options = blackscholes_options
         elif(args.bench_name == "dct"):
             dct_input = "--dct-input=" + args.dct_input
-            dct_output = ""
-
-            if(is_golden):
-                dct_output = "--dct-output=" + BENCH_GOLDEN[args.bench_name]
-            else:
-                dct_output = "--dct-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-
-            dct_options = ' '.join([dct_input, dct_output])
+            
+            dct_options = ' '.join([dct_input, output])
             bench_binary_options = dct_options
         elif(args.bench_name == "jacobi"):
             jacobi_n = "--jacobi-n=" + args.jacobi_n
             jacobi_itol = "--jacobi-itol=" + args.jacobi_itol
             jacobi_dominant = "--jacobi-dominant=" + args.jacobi_dominant
             jacobi_maxiters = "--jacobi-maxiters=" + args.jacobi_maxiters
-            jacobi_output = ""
 
-            if(is_golden):
-                jacobi_output = "--jacobi-output=" + BENCH_GOLDEN[args.bench_name]
-            else:
-                jacobi_output = "--jacobi-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-
-            jacobi_options = ' '.join([jacobi_n, jacobi_itol, jacobi_dominant, jacobi_maxiters, jacobi_output])
+            jacobi_options = ' '.join([jacobi_n, jacobi_itol, jacobi_dominant, jacobi_maxiters, output])
             bench_binary_options = jacobi_options
         elif(args.bench_name == "Kmeans"):
             kmeans_o = "--kmeans-o" if args.kmeans_o else ""
             kmeans_b = "--kmeans-b" if args.kmeans_b else ""
             kmeans_n = "--kmeans-n=" + args.kmeans_n
             kmeans_i = "--kmeans-i=" + args.kmeans_i
-            kmeans_output = ""
 
-            if(is_golden):
-                kmeans_output = "--kmeans-output=" + BENCH_GOLDEN[args.bench_name]
-            else:
-                kmeans_output = "--kmeans-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-
-            kmeans_options = ' '.join([kmeans_o, kmeans_b, kmeans_n, kmeans_i, kmeans_output])
+            kmeans_options = ' '.join([kmeans_o, kmeans_b, kmeans_n, kmeans_i, output])
             bench_binary_options = kmeans_options
         elif(args.bench_name == "monteCarlo"):
             monte_x = "--monte-x=" + args.monte_x
             monte_y = "--monte-y=" + args.monte_y
             monte_walks = "--monte-walks=" + args.monte_walks
             monte_tasks = "--monte-tasks=" + args.monte_tasks
-            monte_output = ""
-            if(is_golden):
-                monte_output = "--monte-output=" + BENCH_GOLDEN[args.bench_name]
-            else:
-                monte_output = "--monte-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
 
-            monte_options = ' '.join([monte_x, monte_y, monte_walks, monte_tasks, monte_output])
+            monte_options = ' '.join([monte_x, monte_y, monte_walks, monte_tasks, output])
             bench_binary_options = monte_options
         elif(args.bench_name == "sobel"):
             sobel_input = "--sobel-input=" + args.sobel_input
-            sobel_output = ""
-            if(is_golden):
-                sobel_output = "--sobel-output=" + BENCH_GOLDEN[args.bench_name]
-            else:
-                sobel_output = "--sobel-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name     
 
-            sobel_options = ' '.join([sobel_input, sobel_output])
+            sobel_options = ' '.join([sobel_input, output])
             bench_binary_options = sobel_options
         elif(args.bench_name == "matrix_mul"):
-            matrix_output = ""
-            if(is_golden):
-                matrix_output = "--matrix-output=" + args.matrix_output
-            else:
-                matrix_output = "--matrix-output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-
-            matrix_options = ' '.join([matrix_output])
+            matrix_options = ' '.join([output])
             bench_binary_options = matrix_options
 
         return bench_binary_options
@@ -277,8 +241,6 @@ def write_results(input_name, args, voltage, result):
                 except Exception as e:
                     print("Error command failed " + str(e))
 
-                if(error_string == ""):
-                    print("Error string should not have been empty")
                 output = error_string.split(",")
                 RE = output[0].strip()
                 ABSE = output[1].strip()
@@ -293,12 +255,8 @@ def write_results(input_name, args, voltage, result):
 
                 try:
                     quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
-                    print(quality_string)
                 except Exception as e:
                     print("Quality command failed: " + str(e))
-
-                if(quality_string == ""):
-                    print("Quality string should not have been empty")
 
                 output = quality_string.split(",")
                 quality = output[1].strip()
@@ -319,9 +277,6 @@ def write_results(input_name, args, voltage, result):
                 except Exception as e:
                     print("Number of lines command failed" + str(e))
                 
-                if(number_of_lines == ""):
-                    print("Number of lines should not have been empty")
-
                 compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name + " " + number_of_lines
                 compare_string = ''
                 try:
@@ -329,8 +284,6 @@ def write_results(input_name, args, voltage, result):
                 except Exception as e:
                     print("Compare command failed " + str(e))
 
-                if(compare_string == ""):
-                    print("Compare string should not have been empty")
                 output = compare_string.rstrip().split("\n")
                 res = output[-1].split(",")
                 cluster_relative_error = res[0]
@@ -351,8 +304,6 @@ def write_results(input_name, args, voltage, result):
                 except Exception as e:
                     print("Calc errors command failed " + str(e))
 
-                if(calc_errors_string == ""):
-                    print("Calc errors string should not have been empty")
                 output = calc_errors_string.split(",")
                 MSE = output[0].strip()
                 RE = output[1].strip()
@@ -370,8 +321,6 @@ def write_results(input_name, args, voltage, result):
                 except Exception as e:
                     print("Psnr command failed " + str(e))
 
-                if(psnr_string == ""):
-                    print("Psnr string should not have been empty")
                 psnr = psnr_string.split(":")[1].strip()
 
             line = ",".join([input_name[:-4], result, psnr + "\n"])
