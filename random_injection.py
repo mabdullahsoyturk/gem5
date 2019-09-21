@@ -47,7 +47,7 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[args.bench_name]
 
-        bench_binary_options = helpers.get_binary_options(args, is_golden = True, is_random = True)
+        bench_binary_options = helpers.get_binary_options(args, is_golden = True)
 
         input_path = '--input-path=' + BENCH_INPUT_HOME + "golden.txt"
 
@@ -136,7 +136,7 @@ class ExperimentManager:
 
         bench_binary_path = '-c ' + BENCH_BINARY[self.args.bench_name]
 
-        bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name, is_random=True)
+        bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
 
         input_path = '--input-path=' + BENCH_INPUT_HOME + "random/" + self.args.bench_name + "/" + self.voltage + "/" + self.input_name
 

@@ -173,7 +173,7 @@ def get_arguments():
 
     return parser.parse_args()
 
-def get_binary_options(args, voltage="", is_golden = False, input_name="", is_random = False):
+def get_binary_options(args, voltage="", is_golden = False, input_name=""):
         bench_binary_options = ''
 
         if(args.bench_name == "blackscholes"):
