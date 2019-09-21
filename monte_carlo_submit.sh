@@ -66,7 +66,7 @@ echo "==========================================================================
 echo "Running..."
 echo "======================================================================================"
 echo "Starting new Job"
-python3 random_injection.py --bench-name=monteCarlo --bench-name=monteCarlo --monte-x=4 --monte-y=4 --monte-walks=4 --monte-tasks=4 --monte-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/monteCarlo/golden.bin
+python3 run.py --random --bench-name=monteCarlo --bench-name=monteCarlo --monte-x=4 --monte-y=4 --monte-walks=4 --monte-tasks=4 --monte-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/monteCarlo/golden.bin
 RET=$?
 echo "Job finished. Return code is $RET"
 echo ""

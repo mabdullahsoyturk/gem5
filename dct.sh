@@ -66,7 +66,7 @@ echo "==========================================================================
 echo "Running..."
 echo "======================================================================================"
 echo "Starting new Job"
-python3 deterministic.py --bench-name=dct --dct-input=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/dct/figs/input.grey --dct-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/dct/golden.bin
+python3 run.py --random --bench-name=dct --dct-input=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/dct/figs/input.grey --dct-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/dct/golden.bin
 RET=$?
 echo "Job finished. Return code is $RET"
 echo ""

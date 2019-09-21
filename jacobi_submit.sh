@@ -66,7 +66,7 @@ echo "==========================================================================
 echo "Running..."
 echo "======================================================================================"
 echo "Starting new Job"
-python3 random_injection.py --bench-name=jacobi --jacobi-n=1000 --jacobi-itol=0.00000001 --jacobi-dominant=1 --jacobi-maxiters=100 --jacobi-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/jacobi/golden.bin
+python3 run.py --random --bench-name=jacobi --jacobi-n=1000 --jacobi-itol=0.00000001 --jacobi-dominant=1 --jacobi-maxiters=100 --jacobi-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/jacobi/golden.bin
 RET=$?
 echo "Job finished. Return code is $RET"
 echo ""

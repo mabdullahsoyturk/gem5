@@ -25,7 +25,7 @@
 #
 # -= Resources =-
 #
-#SBATCH --job-name=sobel
+#SBATCH --job-name=blacksholes
 #SBATCH --account=users
 #SBATCH --nodes=1
 #SBATCH --ntasks=18
@@ -66,7 +66,7 @@ echo "==========================================================================
 echo "Running..."
 echo "======================================================================================"
 echo "Starting new Job"
-python3 random_injection.py --bench-name=blackscholes --blackscholes-input=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/blackscholes/1000.txt --blackscholes-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/blackscholes/golden.bin
+python3 run.py --random --bench-name=blackscholes --blackscholes-input=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/blackscholes/1000.txt --blackscholes-output=/cta/users/masoyturk/FaultModel/gem5/tests/test-progs/blackscholes/golden.bin
 RET=$?
 echo "Job finished. Return code is $RET"
 echo ""
