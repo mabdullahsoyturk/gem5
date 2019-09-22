@@ -63,12 +63,9 @@ class ExperimentManager:
 
     def is_crash(self):
         grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
-        result = ""
-        decoded_result = ""
 
         try:
-            result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-            decoded_result = result.decode('utf-8')
+            decoded_result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode('utf-8')
         except Exception as e:
             sys.exit(str(e))
 
@@ -80,7 +77,6 @@ class ExperimentManager:
     def is_correct(self):
         if(self.args.bench_name == "Kmeans"):
             grep_number_of_lines = 'grep "[0-9]" ' + self.args.kmeans_i + " -c"
-            number_of_lines = ""
             
             try:
                 number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -88,7 +84,6 @@ class ExperimentManager:
                 sys.exit(str(e))
 
             compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
-            compare_string = ''
 
             try:
                 compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -104,7 +99,6 @@ class ExperimentManager:
                 return False
         elif(self.args.bench_name == "dct"):
             quality_command = BENCH_BIN_DIR["dct"] + "/quality " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + self.voltage + "/" + self.input_name
-            quality_string = ""
             
             try:
                 quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")

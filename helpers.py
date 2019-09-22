@@ -96,8 +96,6 @@ def compileBench(bench_name):
 def getNumberOfErrors(input_path, voltage):
     grep_number_of_lines = 'grep ' + '"[0-9]" -c ' + input_path
     
-    result = ""
-
     try:
         result = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode('utf-8')
     except Exception as e:
@@ -109,7 +107,7 @@ def createRandomInput(input_path, voltage, number_of_errors, bench_name):
     input_name = input_path.split("/")[-1]
 
     with open(RANDOM_PATH + "/" + bench_name + "/" + voltage + "/" + input_name, "w") as input_file:
-        for i in range(number_of_errors):
+        for _ in range(number_of_errors):
             fault_type = 0
             fault_set = random.randint(0,31)
             fault_byte_offset = random.randint(0,63)
@@ -234,7 +232,7 @@ def write_results(input_name, args, voltage, result):
             if(result != "Crash"):
                 output_name = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
                 error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + output_name + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
-                error_string = ""
+                
                 try:
                     error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
@@ -250,7 +248,6 @@ def write_results(input_name, args, voltage, result):
             
             if(result != "Crash"):
                 quality_command = BENCH_BIN_DIR["dct"] + "/quality " + args.dct_input + " " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + voltage + "/" + input_name
-                quality_string = ""
 
                 try:
                     quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -269,7 +266,6 @@ def write_results(input_name, args, voltage, result):
 
             if(result != "Crash"):
                 grep_number_of_lines = 'grep "[0-9]" ' + args.kmeans_i + " -c"
-                number_of_lines = ""
 
                 try:
                     number_of_lines = subprocess.Popen(grep_number_of_lines, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -277,7 +273,7 @@ def write_results(input_name, args, voltage, result):
                     sys.exit(str(e))
                 
                 compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name + " " + number_of_lines
-                compare_string = ''
+                
                 try:
                     compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
@@ -297,7 +293,7 @@ def write_results(input_name, args, voltage, result):
 
             if(result != "Crash"):
                 calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + args.monte_output + " " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
-                calc_errors_string = ''
+                
                 try:
                     calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
                 except Exception as e:
@@ -313,7 +309,6 @@ def write_results(input_name, args, voltage, result):
 
             if(result != "Crash"):
                 psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
-                psnr_string = ""
 
                 try:
                     psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
