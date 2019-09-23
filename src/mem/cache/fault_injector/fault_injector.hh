@@ -26,7 +26,8 @@ class CacheBlk;
 
 struct CacheFault {
     int type; // Type of fault : permanent(0) or transient(1)
-    int set; // Address of the block that will be corrupted.
+    int set;
+    int way; 
     int byteOffset; // Byte offset of the address from the beginning of block address.
     int bitOffset; // Determines which bit of the byte will be corrupted.
     std::string cacheToBeInserted; // Indicates which cache to be corrupted.
@@ -45,6 +46,8 @@ class FaultInjector : public SimObject
         std::vector<CacheFault> faults;
 
         bool enabled;
+        
+        const unsigned assoc;
 
     public:
         FaultInjector(FaultInjectorParams *p);
