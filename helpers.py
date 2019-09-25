@@ -7,8 +7,8 @@ import subprocess
 import random
 import concurrent.futures
 
-voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
-#voltages = ["0.59V"]
+#voltages = ["0.54V", "0.55V", "0.56V", "0.57V", "0.58V", "0.59V", "0.60V"]
+voltages = ["0.54V"]
 
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
@@ -37,23 +37,25 @@ BENCH_BINARY = {
     'dct' : os.path.abspath(BENCH_BIN_DIR["dct"] + '/dct')
 }
 
-BENCH_GOLDEN = {
-    'matrix_mul' : os.path.abspath(BENCH_BIN_DIR["matrix_mul"] + '/golden.bin'),
-    'blackscholes': os.path.abspath(BENCH_BIN_DIR["blackscholes"] + '/golden.bin'),
-    'jacobi' : os.path.abspath(BENCH_BIN_DIR["jacobi"] + '/golden.bin'),
-    'Kmeans' : os.path.abspath(BENCH_BIN_DIR["Kmeans"] + '/golden.bin'),
-    'monteCarlo' : os.path.abspath(BENCH_BIN_DIR["monteCarlo"] + '/golden.bin'),
-    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/golden.bin'),
-    'dct' : os.path.abspath(BENCH_BIN_DIR["dct"] + '/golden.bin') 
+BENCH_QUALITY = {
+    'blackscholes': os.path.abspath(BENCH_BIN_DIR["blackscholes"] + '/error '),
+    'jacobi': os.path.abspath(BENCH_BIN_DIR["jacobi"] + '/error '),
+    'Kmeans' : os.path.abspath(BENCH_BIN_DIR["Kmeans"] + '/compare '),
+    'monteCarlo' : os.path.abspath(BENCH_BIN_DIR["monteCarlo"] + '/calc_errors '),
+    'sobel' : os.path.abspath(BENCH_BIN_DIR["sobel"] + '/psnr '),
+    'dct' : os.path.abspath(BENCH_BIN_DIR["dct"] + '/quality ')
 }
 
 def makeDirectories(bench_name, is_deterministic):
-    if (os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs") == False):
-        os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs")
+
+    bench_out_dir = getBenchOutDir(bench_name)
+
+    if (os.path.exists(bench_out_dir) == False):
+        os.mkdir(bench_out_dir)
 
     for v in voltages:
-        if (os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs/" + v ) == False):
-            os.mkdir(BENCH_BIN_DIR[bench_name] + "/outputs/" + v)
+        if (os.path.exists(bench_out_dir + "/" + v ) == False):
+            os.mkdir(bench_out_dir + "/" + v)
     
     if(not is_deterministic):
         if(os.path.exists(RANDOM_PATH) == False):
@@ -70,8 +72,8 @@ def removeDirectories(bench_name):
     if (os.path.exists(WHERE_AM_I + '/' + bench_name + '_results')):
         rmtree(WHERE_AM_I + '/' + bench_name + '_results', ignore_errors=True)
 
-    if(os.path.exists(BENCH_BIN_DIR[bench_name] + "/outputs")):
-        rmtree(BENCH_BIN_DIR[bench_name] + "/outputs", ignore_errors=True)
+    if(os.path.exists(getBenchOutDir(bench_name))):
+        rmtree(getBenchOutDir(bench_name), ignore_errors=True)
 
     if(os.path.exists(RANDOM_PATH + "/" + bench_name)):
         rmtree(RANDOM_PATH + "/" + bench_name , ignore_errors=True)
@@ -91,7 +93,19 @@ def compileBench(bench_name):
         subprocess.check_call(["make CFLAGS=-DFI"], shell=True)
     except Exception as e:
         sys.exit(str(e))
-    os.chdir(WHERE_AM_I) 
+    os.chdir(WHERE_AM_I)
+
+def getBenchGoldenOut(bench_name):
+    return BENCH_BIN_DIR[bench_name] + "/golden.bin"
+
+def getBenchFaultyOut(bench_name, voltage, input_name):
+    return getBenchOutDir(bench_name) + "/" + voltage + "/" + input_name
+
+def getBenchOutDir(bench_name):
+    return BENCH_BIN_DIR[bench_name] + "/outputs"
+
+def getSimOutDir(bench_name, voltage, input_name):
+    return WHERE_AM_I + "/" + bench_name + "_results/faulty/" + voltage + "/" + input_name
 
 def getNumberOfErrors(input_path, voltage):
     grep_number_of_lines = 'grep ' + '"[0-9]" -c ' + input_path
@@ -172,8 +186,8 @@ def get_arguments():
 
 def get_binary_options(args, voltage="", is_golden = False, input_name=""):
         bench_binary_options = ''
-        golden_option = "--output=" + BENCH_GOLDEN[args.bench_name]
-        faulty_option = "--output=" + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
+        golden_option = "--output=" + getBenchGoldenOut(args.bench_name)
+        faulty_option = "--output=" + getBenchFaultyOut(args.bench_name,voltage,input_name)
 
         output = golden_option if is_golden else faulty_option
 
@@ -224,14 +238,14 @@ def get_binary_options(args, voltage="", is_golden = False, input_name=""):
 
 def write_results(input_name, args, voltage, result):
 
-    with open(WHERE_AM_I + "/" + args.bench_name + "_results" + "/" + voltage + "_results.txt", "a") as result_file:
+    with open(getSimOutDir(args.bench_name, voltage, input_name) + "/result.txt", "w") as result_file:
         if(args.bench_name == "blackscholes" or args.bench_name == "jacobi"):
             RE = "1.0"
             ABSE = "1.0"
 
             if(result != "Crash"):
-                output_name = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
-                error_command = BENCH_BIN_DIR[args.bench_name] + "/error " + output_name + " " + BENCH_BIN_DIR[args.bench_name] + "/outputs/" + voltage + "/" + input_name
+                output_path = args.blackscholes_output if args.bench_name == "blackscholes" else args.jacobi_output
+                error_command = BENCH_QUALITY[args.bench_name] + output_path + " " + getBenchFaultyOut(args.bench_name,voltage,input_name) 
                 
                 try:
                     error_string = subprocess.Popen(error_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -247,7 +261,7 @@ def write_results(input_name, args, voltage, result):
             quality = "0.0"
             
             if(result != "Crash"):
-                quality_command = BENCH_BIN_DIR["dct"] + "/quality " + args.dct_input + " " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + voltage + "/" + input_name
+                quality_command = BENCH_QUALITY[args.bench_name] + args.dct_input + " " + getBenchGoldenOut(args.bench_name) + " " + getBenchFaultyOut(args.bench_name,voltage,input_name) 
 
                 try:
                     quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -272,7 +286,7 @@ def write_results(input_name, args, voltage, result):
                 except Exception as e:
                     sys.exit(str(e))
                 
-                compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + input_name + " " + number_of_lines
+                compare_command = BENCH_QUALITY[args.bench_name] + getBenchGoldenOut(args.bench_name) + " " + getBenchFaultyOut(args.bench_name,voltage,input_name)  + " " + number_of_lines
                 
                 try:
                     compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -292,7 +306,7 @@ def write_results(input_name, args, voltage, result):
             RE = "1.0"
 
             if(result != "Crash"):
-                calc_errors_command = BENCH_BIN_DIR["monteCarlo"] + "/calc_errors " + args.monte_output + " " + BENCH_BIN_DIR["monteCarlo"] + "/outputs/" + voltage + "/" + input_name
+                calc_errors_command = BENCH_QUALITY[args.bench_name] + args.monte_output + " " + getBenchFaultyOut(args.bench_name,voltage,input_name) 
                 
                 try:
                     calc_errors_string = subprocess.Popen(calc_errors_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -308,7 +322,7 @@ def write_results(input_name, args, voltage, result):
             psnr = "0.0"
 
             if(result != "Crash"):
-                psnr_command = BENCH_BIN_DIR["sobel"] + "/psnr " + BENCH_BIN_DIR["sobel"] + "/outputs/" + voltage + "/" + input_name + " " + BENCH_GOLDEN[args.bench_name]
+                psnr_command = BENCH_QUALITY[args.bench_name] + getBenchFaultyOut(args.bench_name,voltage,input_name)  + " " + getBenchGoldenOut(args.bench_name)
 
                 try:
                     psnr_string = subprocess.Popen(psnr_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -322,3 +336,12 @@ def write_results(input_name, args, voltage, result):
             line = ",".join([input_name[:-4], result + "\n"])
 
         result_file.write(line)
+
+def mergeResults(bench_name, voltage):
+    output_paths = glob.glob(WHERE_AM_I + "/" + bench_name + "_results/faulty/" + voltage + "/BRAM_*.txt")
+
+    with open(WHERE_AM_I + "/" + bench_name + "_results/" + voltage + "_results.txt","a") as results_file:
+        for out_path in output_paths:
+            with open(out_path + "/result.txt") as result_file:
+                result = result_file.read()
+                results_file.write(result)

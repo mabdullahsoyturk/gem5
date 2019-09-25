@@ -15,7 +15,6 @@ BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
 BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
 BENCH_BIN_DIR = helpers.BENCH_BIN_DIR
 BENCH_BINARY = helpers.BENCH_BINARY
-BENCH_GOLDEN = helpers.BENCH_GOLDEN
 
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
 GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
@@ -59,10 +58,9 @@ class ExperimentManager:
             subprocess.check_call(gem5_command, shell=True)
         except Exception as e:
             sys.exit(str(e))
-    
 
     def is_crash(self):
-        grep_crash = 'grep "exiting with last active thread context" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
+        grep_crash = 'grep "Error" ' + WHERE_AM_I + '/' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name + "/output.txt"
 
         try:
             decoded_result = subprocess.Popen(grep_crash, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode('utf-8')
@@ -70,9 +68,9 @@ class ExperimentManager:
             sys.exit(str(e))
 
         if decoded_result and len(decoded_result) > 0:
-            return False
-        else:
             return True
+        else:
+            return False
 
     def is_correct(self):
         if(self.args.bench_name == "Kmeans"):
@@ -83,7 +81,7 @@ class ExperimentManager:
             except Exception as e:
                 sys.exit(str(e))
 
-            compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + BENCH_GOLDEN["Kmeans"] + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
+            compare_command = BENCH_BIN_DIR["Kmeans"] + "/compare " + helpers.getBenchGoldenOut(self.args.bench_name) + " " + BENCH_BIN_DIR["Kmeans"] + "/outputs/" + voltage + "/" + self.input_name + " " + number_of_lines
 
             try:
                 compare_string = subprocess.Popen(compare_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -98,7 +96,7 @@ class ExperimentManager:
             else:
                 return False
         elif(self.args.bench_name == "dct"):
-            quality_command = BENCH_BIN_DIR["dct"] + "/quality " + BENCH_GOLDEN["dct"] + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + self.voltage + "/" + self.input_name
+            quality_command = BENCH_BIN_DIR["dct"] + "/quality " + helpers.getBenchGoldenOut(self.args.bench_name) + " " + BENCH_BIN_DIR["dct"] + "/outputs/" + self.voltage + "/" + self.input_name
             
             try:
                 quality_string = subprocess.Popen(quality_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode("utf-8")
@@ -113,7 +111,7 @@ class ExperimentManager:
             else:
                 return False
         else:
-            golden_path = BENCH_BIN_DIR[self.args.bench_name] + "/golden.bin"
+            golden_path = helpers.getBenchGoldenOut(self.args.bench_name)
             output_path = BENCH_BIN_DIR[self.args.bench_name] + "/outputs/" + self.voltage + "/" + self.input_name
 
             try:
@@ -150,11 +148,11 @@ class ExperimentManager:
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, subprocess.SubprocessError) as e:
+        except subprocess.SubprocessError as e:
             print("Crashed because " + str(e))
             return "Crash"
 
-        if self.is_crash():
+        if(self.is_crash()):
             return "Crash"
 
         if(self.is_correct()):
@@ -187,10 +185,11 @@ if __name__ == '__main__':
 
     for voltage in voltages:
         with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor: 
-            inputs = WHERE_AM_I + "/inputs/" + (("random/" + args.bench_name + "/") if args.random else "") + voltage + "/BRAM_*.txt"
+            inputs = BENCH_INPUT_HOME + (("random/" + args.bench_name + "/") if args.random else "") + voltage + "/BRAM_*.txt"
 
             input_paths = glob.glob(inputs)
 
             method_with_params = partial(run_experiment, args=args, voltage=voltage)
 
             executor.map(method_with_params, input_paths)
+        helpers.mergeResults(args.bench_name, voltage)
