@@ -13,7 +13,7 @@ class L1Cache(Cache):
     mshrs = 4
     tgts_per_mshr = 20
 
-    def __init__(self, opts=None):
+    def __init__(self):
         super(L1Cache, self).__init__()
         pass
 
@@ -26,9 +26,9 @@ class L1Cache(Cache):
 class L1ICache(L1Cache):
     size = '16kB'
 
-    def __init__(self, opts=None):
+    def __init__(self):
         self.cache_type = 'l1i'
-        super(L1ICache, self).__init__(opts)
+        super(L1ICache, self).__init__()
 
     def connectCPU(self, cpu):
         self.cpu_side = cpu.icache_port
@@ -36,9 +36,9 @@ class L1ICache(L1Cache):
 class L1DCache(L1Cache):
     size = '2kB'
 
-    def __init__(self, opts=None):
+    def __init__(self):
         self.cache_type = 'l1d'
-        super(L1DCache, self).__init__(opts)
+        super(L1DCache, self).__init__()
 
     def connectCPU(self, cpu):
         self.cpu_side = cpu.dcache_port

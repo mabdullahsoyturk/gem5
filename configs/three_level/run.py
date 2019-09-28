@@ -62,14 +62,31 @@ system.membus = SystemXBar()
 system.cpu.dcache = L1DCache()
 system.cpu.icache = L1ICache()
 
-system.cpu.dcache.fault_injector = FaultInjector(input_path=opts.input_path)
-system.cpu.icache.fault_injector = FaultInjector(input_path=opts.input_path)
+faultInjector = FaultInjector(input_path=opts.input_path)
+
+system.cpu.dcache.fault_injector = faultInjector
+system.cpu.icache.fault_injector = faultInjector
 
 system.cpu.dcache.connectCPU(system.cpu)
 system.cpu.icache.connectCPU(system.cpu)
 
-system.cpu.dcache.connectBus(system.membus)
-system.cpu.icache.connectBus(system.membus)
+system.l2bus = L2XBar()
+
+system.cpu.dcache.connectBus(system.l2bus)
+system.cpu.icache.connectBus(system.l2bus)
+
+system.l2cache = L2Cache()
+system.l2cache.connectCPUSideBus(system.l2bus)
+system.l2cache.fault_injector = faultInjector
+
+system.l3bus = L3XBar()
+
+system.l2cache.connectMemSideBus(system.l3bus)
+
+system.l3cache = L3Cache()
+system.l3cache.connectCPUSideBus(system.l3bus)
+system.l3cache.connectMemSideBus(system.membus)
+system.l3cache.fault_injector = faultInjector
 
 system.cpu.createInterruptController()
 

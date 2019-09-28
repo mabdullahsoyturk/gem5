@@ -36,7 +36,7 @@ FaultInjector::init(std::string owner)
                 fault.type = type;
 
                 // Calculate set and way from entry index
-                const std::lldiv_t div_result = std::div((long long)it->index, assoc);
+                const std::lldiv_t div_result = std::div((long long)index, assoc);
                 const uint32_t set = div_result.quot;
                 const uint32_t way = div_result.rem;
 
@@ -67,7 +67,7 @@ FaultInjector::flipBit(CacheFault fault, CacheBlk* blk, unsigned blkSize)
     
     uint8_t oldValue = data[fault.byteOffset];
     data[fault.byteOffset] &= ~(1UL << fault.bitOffset);
-    DPRINTF(FaultTrace, "Set: %#x, Byte Offset: %d, Bit Offset: %d\n corrupted", fault.index, fault.byteOffset, fault.bitOffset);
+    DPRINTF(FaultTrace, "Set: %#x, Way: %#x, Byte Offset: %d, Bit Offset: %d\n corrupted", fault.set, fault.way, fault.byteOffset, fault.bitOffset);
     DPRINTF(FaultTrace, "Old value of byte %d : %d, New value of byte %d: %d\n", fault.byteOffset, oldValue, fault.byteOffset, data[fault.byteOffset]);
 }
 

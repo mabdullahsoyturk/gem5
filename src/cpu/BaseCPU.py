@@ -53,7 +53,7 @@ from m5.proxy import *
 from m5.util.fdthelper import *
 
 from m5.objects.ClockedObject import ClockedObject
-from m5.objects.XBar import L2XBar
+from m5.objects.XBar import L2XBar, L3XBar
 from m5.objects.InstTracer import InstTracer
 from m5.objects.CPUTracers import ExeTracer
 from m5.objects.SubSystem import SubSystem
@@ -313,6 +313,15 @@ class BaseCPU(ClockedObject):
         self.l2cache = l2c
         self.toL2Bus.master = self.l2cache.cpu_side
         self._cached_ports = ['l2cache.mem_side']
+
+    def addThreeLevelCacheHierarchy(self, ic, dc, l2c, iwc=None, dwc=None,
+                                  xbar=None):
+        self.addPrivateSplitL2Caches(ic, dc, iwc, dwc)
+        self.toL3Bus = xbar if xbar else L3XBar()
+        self.connectCachedPorts(self.toL3Bus)
+        self.l3cache = l3c
+        self.toL3Bus.master = self.l3cache.cpu_side
+        self._cached_ports = ['l3cache.mem_side']
 
     def createThreads(self):
         # If no ISAs have been created, assume that the user wants the

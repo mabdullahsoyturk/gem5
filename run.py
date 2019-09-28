@@ -17,7 +17,7 @@ BENCH_BIN_DIR = helpers.BENCH_BIN_DIR
 BENCH_BINARY = helpers.BENCH_BINARY
 
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
-GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py')
+GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/three_level/run.py')
 
 class ExperimentManager:
     ##

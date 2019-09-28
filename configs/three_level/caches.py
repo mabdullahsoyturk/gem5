@@ -1,8 +1,6 @@
 import m5
 from m5.objects import Cache
 
-from optparse import OptionParser
-
 # For all options see src/mem/cache/BaseCache.py
 
 class L1Cache(Cache):
@@ -34,7 +32,7 @@ class L1ICache(L1Cache):
         self.cpu_side = cpu.icache_port
 
 class L1DCache(L1Cache):
-    size = '64kB'
+    size = '2kB'
 
     def __init__(self):
         self.cache_type = 'l1d'
@@ -55,6 +53,25 @@ class L2Cache(Cache):
     def __init__(self):
         self.cache_type = 'l2'
         super(L2Cache, self).__init__()
+
+    def connectCPUSideBus(self, bus):
+        self.cpu_side = bus.master
+
+    def connectMemSideBus(self, bus):
+        self.mem_side = bus.slave
+
+class L3Cache(Cache):
+    size = '8MB'
+    assoc = 8
+    tag_latency = 200
+    data_latency = 200
+    response_latency = 200
+    mshrs = 100
+    tgts_per_mshr = 4
+
+    def __init__(self):
+        self.cache_type = 'l3'
+        super(L3Cache, self).__init__()
 
     def connectCPUSideBus(self, bus):
         self.cpu_side = bus.master
