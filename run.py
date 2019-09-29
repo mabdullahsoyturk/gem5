@@ -18,7 +18,11 @@ BENCH_BINARY = helpers.BENCH_BINARY
 BENCH_QUALITY = helpers.BENCH_QUALITY
 
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
-GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/three_level/run.py')
+GEM5_SCRIPT = {
+    "1":os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py'),
+    "2":os.path.abspath(WHERE_AM_I + '/configs/two_level/run.py'),
+    "3":os.path.abspath(WHERE_AM_I + '/configs/three_level/run.py')
+}
 
 class ExperimentManager:
     ##
@@ -53,7 +57,7 @@ class ExperimentManager:
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
-        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
+        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT[args.cache_level], gem5_script_option])
 
         try:    
             subprocess.check_call(gem5_command, shell=True)
@@ -119,7 +123,7 @@ class ExperimentManager:
 
     def inject(self):
         redirection = '-re'
-        outdir = '--outdir=' + self.args.bench_name + '_results/faulty/' + self.voltage + "/" + self.input_name
+        outdir = '--outdir=' + helpers.getSimOutDir(self.args.bench_name,self.voltage,self.input_name)
         stdout_file = '--stdout-file=output.txt'
         stderr_file = '--stderr-file=error.txt'
         debug_file = '--debug-file=log.txt'
@@ -139,7 +143,7 @@ class ExperimentManager:
 
         gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
 
-        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
+        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT[self.args.cache_level], gem5_script_option])
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)

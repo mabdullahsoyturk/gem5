@@ -145,6 +145,7 @@ def get_arguments():
     parser.add_argument('-c','--bench-name', help='Benchmark\'s name', default='matrix_mul')
     parser.add_argument('-f', '--flags', action='store', nargs='*', help='All gem5 debug flags')
     parser.add_argument('-r', '--random', action='store_true')
+    parser.add_argument('-l', '--cache-level', action='store', default="1")
 
     # Options for dct application : example run: ./dct <inputFile> <outputFile>
     parser.add_argument("--dct-input", help="Input file for dct application", default="")
