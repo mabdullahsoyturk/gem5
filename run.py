@@ -7,14 +7,10 @@ import concurrent.futures
 import filecmp
 import helpers
 
-voltages = helpers.voltages
-
 WHERE_AM_I = os.path.dirname(os.path.realpath(__file__)) #  Absolute Path to *THIS* Script
 
 BENCH_INPUT_HOME = WHERE_AM_I + '/inputs/'
 BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
-BENCH_BIN_DIR = helpers.BENCH_BIN_DIR
-BENCH_BINARY = helpers.BENCH_BINARY
 BENCH_QUALITY = helpers.BENCH_QUALITY
 
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
@@ -49,7 +45,7 @@ class ExperimentManager:
 
         gem5_option = ' '.join([redirection, outdir, stdout_file, stderr_file, debug_file, debug_flags])
 
-        bench_binary_path = '-c ' + BENCH_BINARY[args.bench_name]
+        bench_binary_path = '-c ' + helpers.BENCH_BINARY[args.bench_name]
 
         bench_binary_options = helpers.get_binary_options(args, is_golden = True)
 
@@ -135,7 +131,7 @@ class ExperimentManager:
 
         gem5_option = ' '.join([redirection, outdir, stdout_file, stderr_file, debug_file, debug_flags])
 
-        bench_binary_path = '-c ' + BENCH_BINARY[self.args.bench_name]
+        bench_binary_path = '-c ' + helpers.BENCH_BINARY[self.args.bench_name]
 
         bench_binary_options = helpers.get_binary_options(self.args, self.voltage, False, self.input_name)
 
@@ -171,8 +167,6 @@ def run_experiment(input_path, args, voltage):
 if __name__ == '__main__':
     args = helpers.get_arguments()
     
-    open(BENCH_INPUT_HOME + "golden.txt","w").close() # Empty file for golden run
-   
     helpers.compileBench(args.bench_name)      # Compile benchmarks
     helpers.removeDirectories(args.bench_name) # Remove the results of previous experiments
     helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
@@ -182,7 +176,7 @@ if __name__ == '__main__':
     if(args.random):
         helpers.createRandomInputs(args.bench_name)
 
-    for voltage in voltages:
+    for voltage in helpers.voltages:
         with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor: 
             inputs = BENCH_INPUT_HOME + (("random/" + args.bench_name + "/") if args.random else "") + voltage + "/BRAM_*.txt"
 

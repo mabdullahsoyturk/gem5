@@ -10,9 +10,7 @@ FaultInjector *gFIptr;
 
 FaultInjector::FaultInjector(FaultInjectorParams *params) :
     SimObject(params),inputPath(params->input_path),enabled(false), assoc(params->assoc)
-{
-}
-
+{}
 
 void 
 FaultInjector::init(std::string owner) 
@@ -102,13 +100,13 @@ FaultInjector* FaultInjectorParams::create()
 
 void
 FaultInjector::enableFI(){
-    DPRINTF(FaultTrace, "I am enabling fault injection\n");
+    DPRINTF(FaultTrace, "Fault injection is enabled\n");
     enabled = true;
 }
 
 void
 FaultInjector:: disableFI(){
-    DPRINTF(FaultTrace, "I am disabling fault injection\n");
+    DPRINTF(FaultTrace, "Fault injection is disabled\n");
     enabled=false;
 }
 

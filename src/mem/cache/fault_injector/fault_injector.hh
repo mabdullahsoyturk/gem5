@@ -26,8 +26,8 @@ class CacheBlk;
 
 struct CacheFault {
     int type; // Type of fault : permanent(0) or transient(1)
-    int set;
-    int way; 
+    int set; // Set of the fault
+    int way; // Way of the fault
     int byteOffset; // Byte offset of the address from the beginning of block address.
     int bitOffset; // Determines which bit of the byte will be corrupted.
     std::string cacheToBeInserted; // Indicates which cache to be corrupted.
@@ -45,8 +45,10 @@ class FaultInjector : public SimObject
         /** Vector that contains faults.  */
         std::vector<CacheFault> faults;
 
+        /** Whether the fault injector is enabled. */ 
         bool enabled;
         
+        /** Set associativity of the cache */ 
         const unsigned assoc;
 
     public:
@@ -63,14 +65,14 @@ class FaultInjector : public SimObject
          * specified bit to 1. If it is stuck at 0 fault, it flips specified bit to 0.
          * 
          * @param fault The fault that defines the stuck at policy, byte offset and bit offset.
-         * @param pkt Pointer to the packet whose data will be corrupted.
+         * @param blk Cache block that will be corrupted
          * @param blkSize Size of one block in the cache.
          */
         void flipBit(CacheFault fault, CacheBlk* blk, unsigned blkSize);
 
         /** Injects all active faults at specified tick. 
          * 
-         * @param pkt Packet that will be corrupted.
+         * @param tags Cache tags.
          * @param blkSize Size of one block in cache.
          * @param isRead Indicates whether we inject faults on a read. This is useful because, for example, there is no point of inserting
          * a transient fault on a write.  
