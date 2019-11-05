@@ -14,11 +14,8 @@ BENCH_BIN_HOME = WHERE_AM_I + '/tests/test-progs'
 BENCH_QUALITY = helpers.BENCH_QUALITY
 
 GEM5_BINARY = os.path.abspath(WHERE_AM_I + '/build/X86/gem5.opt')
-GEM5_SCRIPT = {
-    "1":os.path.abspath(WHERE_AM_I + '/configs/one_level/run.py'),
-    "2":os.path.abspath(WHERE_AM_I + '/configs/two_level/run.py'),
-    "3":os.path.abspath(WHERE_AM_I + '/configs/three_level/run.py')
-}
+GEM5_SCRIPT = os.path.abspath(WHERE_AM_I + '/configs/fi_config/run.py')
+
 
 class ExperimentManager:
     ##
@@ -51,9 +48,11 @@ class ExperimentManager:
 
         input_path = '--input-path=' + BENCH_INPUT_HOME + "golden.txt"
 
-        gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
+        cache_level = args.cache_level
 
-        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT[args.cache_level], gem5_script_option])
+        gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path, cache_level])
+
+        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
 
         try:    
             subprocess.check_call(gem5_command, shell=True)
@@ -137,9 +136,11 @@ class ExperimentManager:
 
         input_path = '--input-path=' + BENCH_INPUT_HOME + (("random/" + self.args.bench_name + "/") if args.random else "") + self.voltage + "/" + self.input_name
 
-        gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path])
+        cache_level = '--cache-level=' + self.args.cache_level
 
-        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT[self.args.cache_level], gem5_script_option])
+        gem5_script_option = ' '.join([bench_binary_path, bench_binary_options, input_path, cache_level])
+
+        gem5_command = ' '.join([GEM5_BINARY, gem5_option, GEM5_SCRIPT, gem5_script_option])
         
         try:
             subprocess.check_call(gem5_command, shell=True, timeout=1800)
@@ -166,7 +167,7 @@ def run_experiment(input_path, args, voltage):
 
 if __name__ == '__main__':
     args = helpers.get_arguments()
-    
+
     helpers.compileBench(args.bench_name)      # Compile benchmarks
     helpers.removeDirectories(args.bench_name) # Remove the results of previous experiments
     helpers.makeDirectories(args.bench_name, False)   # Make new directories for these experiments
