@@ -147,6 +147,16 @@ def get_arguments():
     parser.add_argument('-r', '--random', action='store_true')
     parser.add_argument('-l', '--cache-level', action='store', default="1")
 
+    # Cache Options
+    parser.add_argument("--l1d-size", default="64kB")
+    parser.add_argument("--l1i-size", default="32kB")
+    parser.add_argument("--l2-size", default="2MB")
+    parser.add_argument("--l3-size", default="16MB")
+    parser.add_argument("--l1d-assoc", type=int, default=2)
+    parser.add_argument("--l1i-assoc", type=int, default=2)
+    parser.add_argument("--l2-assoc", type=int, default=8)
+    parser.add_argument("--l3-assoc", type=int, default=16)
+
     # Options for dct application : example run: ./dct <inputFile> <outputFile>
     parser.add_argument("--dct-input", help="Input file for dct application", default="")
     parser.add_argument("--dct-output", help="Output file for dct application", default="")

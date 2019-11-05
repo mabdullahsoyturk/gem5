@@ -3,6 +3,7 @@ import m5
 from os.path import dirname as up
 from m5.objects import *
 from caches import *
+from options import get_opts
 from optparse import OptionParser
 
 GEM5_PATH = up(up(up(__file__)))
@@ -11,41 +12,7 @@ BENCH_BIN_HOME = GEM5_PATH + '/tests/test-progs'
 
 GOLDEN_INPUT_PATH = GEM5_PATH + "inputs/golden.txt"
 
-parser = OptionParser()
-
-parser.add_option("-c", "--bench-path", help="Binary of the program to be simulated")
-parser.add_option("--input-path", help="Fault input file", default=GOLDEN_INPUT_PATH)
-parser.add_option("--output", help="Output", default="")
-parser.add_option("--cache-level", help="Cache Level", default="1")
-
-# Options for dct application : example run: ./dct <inputFile> <outputFile>
-parser.add_option("--dct-input", help="Input file for dct application", default="")
-
-# Options for blackscholes application : example run: ./blackscholes <inputFile> <outputFile>
-parser.add_option("--blackscholes-input", help="Input file for blackscholes application", default="")
-
-# Options for jacobi application : example run: ./jacobi 1000 0.00000001 1 100 $outputFileName
-parser.add_option("--jacobi-n", help="Size of matrix", default="")
-parser.add_option("--jacobi-itol", help="Itol", default="")
-parser.add_option("--jacobi-dominant", help="Is diagonally dominant?", default="")
-parser.add_option("--jacobi-maxiters", help="Maximum iteration", default="")
-
-# Options for kmeans application : example run: seq_main -o -b -n 4 -i Image_data/color17695.bin
-parser.add_option("--kmeans-o", action="store_true", help="output timing results")
-parser.add_option("--kmeans-b", action="store_true", help="input file is in binary format")
-parser.add_option("--kmeans-n", help="number of clusters")
-parser.add_option("--kmeans-i", help="file containing data to be clustered")
-
-# Options for monte carlo application : example run: ./monte_carlo  5 5 50 5 out.bin
-parser.add_option("--monte-x", help="Size of X", default="")
-parser.add_option("--monte-y", help="Size of Y", default="")
-parser.add_option("--monte-walks", help="Is diagonally dominant?", default="")
-parser.add_option("--monte-tasks", help="Maximum iteration", default="")
-
-# Options for sobel application : example run: ./sobel 'input file' 'output file' 
-parser.add_option("--sobel-input", help="Input file", default="")
-
-(opts, args) = parser.parse_args()
+(opts, args) = get_opts()
 
 system = System()
 
@@ -60,8 +27,8 @@ system.cpu = AtomicSimpleCPU()
 
 system.membus = SystemXBar()
 
-system.cpu.dcache = L1DCache()
-system.cpu.icache = L1ICache()
+system.cpu.dcache = L1DCache(opts)
+system.cpu.icache = L1ICache(opts)
 
 fault_injector = FaultInjector(input_path=opts.input_path)
 
@@ -80,7 +47,7 @@ elif opts.cache_level == "2":
     system.cpu.dcache.connectBus(system.l2bus)
     system.cpu.icache.connectBus(system.l2bus)
 
-    system.l2cache = L2Cache()
+    system.l2cache = L2Cache(opts)
     system.l2cache.connectCPUSideBus(system.l2bus)
     system.l2cache.fault_injector = fault_injector
     system.l2cache.connectMemSideBus(system.membus)
@@ -90,7 +57,7 @@ elif opts.cache_level == "3":
     system.cpu.dcache.connectBus(system.l2bus)
     system.cpu.icache.connectBus(system.l2bus)
 
-    system.l2cache = L2Cache()
+    system.l2cache = L2Cache(opts)
     system.l2cache.connectCPUSideBus(system.l2bus)
     system.l2cache.fault_injector = fault_injector
 
@@ -98,7 +65,7 @@ elif opts.cache_level == "3":
 
     system.l2cache.connectMemSideBus(system.l3bus)
 
-    system.l3cache = L3Cache()
+    system.l3cache = L3Cache(opts)
     system.l3cache.connectCPUSideBus(system.l3bus)
     system.l3cache.connectMemSideBus(system.membus)
     system.l3cache.fault_injector = faultInjector
