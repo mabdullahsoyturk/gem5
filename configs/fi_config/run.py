@@ -1,16 +1,7 @@
-import os
 import m5
-from os.path import dirname as up
 from m5.objects import *
 from caches import *
-from options import get_opts
-from optparse import OptionParser
-
-GEM5_PATH = up(up(up(__file__)))
-
-BENCH_BIN_HOME = GEM5_PATH + '/tests/test-progs'
-
-GOLDEN_INPUT_PATH = GEM5_PATH + "inputs/golden.txt"
+from options import get_opts, get_process_cmd
 
 (opts, args) = get_opts()
 
@@ -89,20 +80,8 @@ system.mem_ctrl.port = system.membus.master
 
 process = Process()
 
-if(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/blackscholes/blackscholes')):
-    process.cmd = [opts.bench_path] + [opts.blackscholes_input, opts.output]
-elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/dct/dct')):
-    process.cmd = [opts.bench_path] + [opts.dct_input, opts.output]
-elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/jacobi/jacobi')):
-    process.cmd = [opts.bench_path] + [opts.jacobi_n, opts.jacobi_itol, opts.jacobi_dominant, opts.jacobi_maxiters, opts.output]
-elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/Kmeans/seq_main')):
-    process.cmd = [opts.bench_path] + ["-o", "-b" if opts.kmeans_b else "", "-i", opts.kmeans_i, "-n", opts.kmeans_n, "-w", opts.output]
-elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/monteCarlo/monte_carlo')):
-    process.cmd = [opts.bench_path] + [opts.monte_x, opts.monte_y, opts.monte_walks, opts.monte_tasks, opts.output]
-elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/sobel/sobel')):
-    process.cmd = [opts.bench_path] + [opts.sobel_input, opts.output]
-else:
-    process.cmd = [opts.bench_path] + [opts.output]
+process.cmd = get_process_cmd(opts)
+
 # Set the cpu to use the process as its workload and create thread contexts
 system.cpu.workload = process
 system.cpu.createThreads()

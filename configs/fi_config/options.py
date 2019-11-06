@@ -1,4 +1,10 @@
+import os
 from optparse import OptionParser
+from os.path import dirname as up
+
+GEM5_PATH = up(up(up(__file__)))
+
+BENCH_BIN_HOME = GEM5_PATH + '/tests/test-progs'
 
 def get_opts():
     parser = OptionParser()
@@ -9,7 +15,7 @@ def get_opts():
     parser.add_option("--cache-level", help="Cache Level", default="1")
 
     # Cache Options
-    parser.add_option("--l1d-size", type="string", default="64kB")
+    parser.add_option("--l1d-size", type="string", default="2kB")
     parser.add_option("--l1i-size", type="string", default="32kB")
     parser.add_option("--l2-size", type="string", default="2MB")
     parser.add_option("--l3-size", type="string", default="16MB")
@@ -46,3 +52,19 @@ def get_opts():
     parser.add_option("--sobel-input", help="Input file", default="")
 
     return parser.parse_args()
+
+def get_process_cmd(opts):
+    if(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/blackscholes/blackscholes')):
+        return [opts.bench_path] + [opts.blackscholes_input, opts.output]
+    elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/dct/dct')):
+        return [opts.bench_path] + [opts.dct_input, opts.output]
+    elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/jacobi/jacobi')):
+        return [opts.bench_path] + [opts.jacobi_n, opts.jacobi_itol, opts.jacobi_dominant, opts.jacobi_maxiters, opts.output]
+    elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/Kmeans/seq_main')):
+        return [opts.bench_path] + ["-o", "-b" if opts.kmeans_b else "", "-i", opts.kmeans_i, "-n", opts.kmeans_n, "-w", opts.output]
+    elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/monteCarlo/monte_carlo')):
+        return [opts.bench_path] + [opts.monte_x, opts.monte_y, opts.monte_walks, opts.monte_tasks, opts.output]
+    elif(opts.bench_path == os.path.abspath(BENCH_BIN_HOME + '/sobel/sobel')):
+        return [opts.bench_path] + [opts.sobel_input, opts.output]
+    else:
+        return [opts.bench_path] + [opts.output]
