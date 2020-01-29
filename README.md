@@ -1,3 +1,6 @@
+## Reference
+Soyturk, M. A., Parasyris, K., Salami, B., Unsal, O., Yalcin, G., & Gomez, L. B. (2019). [Hardware Versus Software Fault Injection of Modern Undervolted SRAMs](https://arxiv.org/abs/1912.00154). arXiv preprint arXiv:1912.00154.
+
 ### Building GEM5
 
 To build gem5, you will need the following software:
